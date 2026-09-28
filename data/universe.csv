@@ -1,0 +1,46 @@
+ticker,name,sector,market_cap,sector_rank,role,snapshot_date
+VZ,Verizon,Communication Services,195606824117.7806,1,selected,2026-09-28
+DIS,Walt Disney Company (The),Communication Services,183287817282.01514,2,selected,2026-09-28
+T,AT&T,Communication Services,173913542046.2491,3,alternate,2026-09-28
+CMCSA,Comcast,Communication Services,77750626772.95103,4,alternate,2026-09-28
+AMZN,Amazon,Consumer Discretionary,2693018889770.91,1,selected,2026-09-28
+HD,Home Depot (The),Consumer Discretionary,292522610522.02844,2,selected,2026-09-28
+MCD,McDonald's,Consumer Discretionary,167357222081.5,3,alternate,2026-09-28
+TJX,TJX Companies,Consumer Discretionary,143062623688.17645,4,alternate,2026-09-28
+WMT,Walmart,Consumer Staples,856685945736.2393,1,selected,2026-09-28
+COST,Costco,Consumer Staples,409032575477.53906,2,selected,2026-09-28
+KO,Coca-Cola Company (The),Consumer Staples,377806838523.5594,3,alternate,2026-09-28
+PG,Procter & Gamble,Consumer Staples,339644362260.2333,4,alternate,2026-09-28
+XOM,ExxonMobil,Energy,660331926598.1287,1,selected,2026-09-28
+CVX,Chevron Corporation,Energy,401049783382.9619,2,selected,2026-09-28
+COP,ConocoPhillips,Energy,155088830809.03827,3,alternate,2026-09-28
+VLO,Valero Energy,Energy,111479752241.13629,4,alternate,2026-09-28
+BRK-B,Berkshire Hathaway,Financials,1082086010189.6602,1,selected,2026-09-28
+JPM,JPMorgan Chase,Financials,911917349566.9875,2,selected,2026-09-28
+BAC,Bank of America,Financials,396488837630.54364,3,alternate,2026-09-28
+MS,Morgan Stanley,Financials,308317864948.12964,4,alternate,2026-09-28
+LLY,Lilly (Eli),Health Care,1055340249511.1113,1,selected,2026-09-28
+JNJ,Johnson & Johnson,Health Care,653612700420.1107,2,selected,2026-09-28
+MRK,Merck & Co.,Health Care,367065793289.9559,3,alternate,2026-09-28
+UNH,UnitedHealth Group,Health Care,338025240144.6395,4,alternate,2026-09-28
+CAT,Caterpillar Inc.,Industrials,377659703160.392,1,selected,2026-09-28
+GE,GE Aerospace,Industrials,339376318577.50256,2,selected,2026-09-28
+RTX,RTX Corporation,Industrials,255265384247.5371,3,alternate,2026-09-28
+DE,Deere & Company,Industrials,186165567893.9065,4,alternate,2026-09-28
+NVDA,Nvidia,Information Technology,5434765466857.91,1,selected,2026-09-28
+AAPL,Apple Inc.,Information Technology,4977637079490.967,2,selected,2026-09-28
+MSFT,Microsoft,Information Technology,3832843689188.0576,3,alternate,2026-09-28
+MU,Micron Technology,Information Technology,1222319652551.97,4,alternate,2026-09-28
+LIN,Linde plc,Materials,216609975544.7091,1,selected,2026-09-28
+NEM,Newmont,Materials,127949852789.09137,2,selected,2026-09-28
+FCX,Freeport-McMoRan,Materials,103838423582.22784,3,alternate,2026-09-28
+SHW,Sherwin-Williams,Materials,79891708975.77817,4,alternate,2026-09-28
+WELL,Welltower,Real Estate,166718742666.65198,1,selected,2026-09-28
+PLD,Prologis,Real Estate,126441858044.7873,2,selected,2026-09-28
+EQIX,Equinix,Real Estate,99468954909.1637,3,alternate,2026-09-28
+AMT,American Tower,Real Estate,78761226344.64111,4,alternate,2026-09-28
+NEE,NextEra Energy,Utilities,158701225960.2602,1,selected,2026-09-28
+SO,Southern Company,Utilities,95342079462.51375,2,selected,2026-09-28
+DUK,Duke Energy,Utilities,88379242386.81888,3,alternate,2026-09-28
+AEP,American Electric Power,Utilities,64429425778.515564,4,alternate,2026-09-28
+SPY,SPDR S&P 500 ETF Trust,Market proxy,,0,market_proxy,2026-09-28
