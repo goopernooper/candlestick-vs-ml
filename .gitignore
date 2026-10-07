@@ -216,3 +216,10 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# Raw price data and backups stay out of git
+data/raw/
+*.zip
+
+# Editor settings
+.vscode/
