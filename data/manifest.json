@@ -1,0 +1,482 @@
+{
+  "created": "2026-10-07T16:55:20+00:00",
+  "download_dates": [
+    "2026-09-28"
+  ],
+  "source": "Yahoo Finance via yfinance, auto_adjust=True",
+  "requested_range": {
+    "start": "2001-10-01",
+    "end_exclusive": "2026-01-01"
+  },
+  "python": "3.13.15",
+  "packages": {
+    "yfinance": "1.7.0",
+    "pandas": "3.0.6",
+    "pyarrow": "25.0.1",
+    "numpy": "2.5.3"
+  },
+  "ticker_count": 46,
+  "missing": [],
+  "files": [
+    {
+      "ticker": "VZ",
+      "file": "data/raw/VZ.parquet",
+      "rows": 6103,
+      "first_date": "2001-10-01",
+      "last_date": "2025-12-31",
+      "bytes": 313826,
+      "sha256": "27b1539c06305f5ee3af852511db500251251d429881942eba1cefaac4a4435f",
+      "downloaded_at": "2026-09-28T19:14:30+00:00"
+    },
+    {
+      "ticker": "DIS",
+      "file": "data/raw/DIS.parquet",
+      "rows": 6103,
+      "first_date": "2001-10-01",
+      "last_date": "2025-12-31",
+      "bytes": 312590,
+      "sha256": "e8bb6e0b043e28f52ed8edee5846c49e4b3171f3640db182ce73a069c6ee186e",
+      "downloaded_at": "2026-09-28T19:14:32+00:00"
+    },
+    {
+      "ticker": "T",
+      "file": "data/raw/T.parquet",
+      "rows": 6103,
+      "first_date": "2001-10-01",
+      "last_date": "2025-12-31",
+      "bytes": 314497,
+      "sha256": "d924d8e71910c342cf41935a429e5167e5ab68b6fa423b5a72b9528314dee287",
+      "downloaded_at": "2026-09-28T19:14:33+00:00"
+    },
+    {
+      "ticker": "CMCSA",
+      "file": "data/raw/CMCSA.parquet",
+      "rows": 6103,
+      "first_date": "2001-10-01",
+      "last_date": "2025-12-31",
+      "bytes": 312864,
+      "sha256": "e4803f62418e8d4ff2e83adeb13a13e3cac898936f294b9d57d99c03252ee14e",
+      "downloaded_at": "2026-09-28T19:14:35+00:00"
+    },
+    {
+      "ticker": "AMZN",
+      "file": "data/raw/AMZN.parquet",
+      "rows": 6103,
+      "first_date": "2001-10-01",
+      "last_date": "2025-12-31",
+      "bytes": 268242,
+      "sha256": "a44bd53b5a119134ad9e76661eddce47ecd0777290111e4049d7d543b818367b",
+      "downloaded_at": "2026-09-28T19:14:36+00:00"
+    },
+    {
+      "ticker": "HD",
+      "file": "data/raw/HD.parquet",
+      "rows": 6103,
+      "first_date": "2001-10-01",
+      "last_date": "2025-12-31",
+      "bytes": 313945,
+      "sha256": "7d396bef2ea8f10b9ba973052dc13fcecb44cb483400df7b7c637bb77c67b536",
+      "downloaded_at": "2026-09-28T19:14:38+00:00"
+    },
+    {
+      "ticker": "MCD",
+      "file": "data/raw/MCD.parquet",
+      "rows": 6103,
+      "first_date": "2001-10-01",
+      "last_date": "2025-12-31",
+      "bytes": 311708,
+      "sha256": "605b9c7f312ce8aecb6259eec761ff88e08159a25c667e6cf3f9259d6cc0bf0b",
+      "downloaded_at": "2026-09-28T19:14:39+00:00"
+    },
+    {
+      "ticker": "TJX",
+      "file": "data/raw/TJX.parquet",
+      "rows": 6103,
+      "first_date": "2001-10-01",
+      "last_date": "2025-12-31",
+      "bytes": 312847,
+      "sha256": "5d08dda542b8a9bdd41c33969df98d090154791a3892b266a10835cef3fc2830",
+      "downloaded_at": "2026-09-28T19:14:41+00:00"
+    },
+    {
+      "ticker": "WMT",
+      "file": "data/raw/WMT.parquet",
+      "rows": 6103,
+      "first_date": "2001-10-01",
+      "last_date": "2025-12-31",
+      "bytes": 315651,
+      "sha256": "e67dd5ddf1660b521bcfab3792a1c49fd28fd513c598b631e814fb5219252285",
+      "downloaded_at": "2026-09-28T19:14:42+00:00"
+    },
+    {
+      "ticker": "COST",
+      "file": "data/raw/COST.parquet",
+      "rows": 6103,
+      "first_date": "2001-10-01",
+      "last_date": "2025-12-31",
+      "bytes": 311244,
+      "sha256": "fac225d204a4a373e9bcb062382953392b64779e2f5b258c346779362f9abc56",
+      "downloaded_at": "2026-09-28T19:14:43+00:00"
+    },
+    {
+      "ticker": "KO",
+      "file": "data/raw/KO.parquet",
+      "rows": 6103,
+      "first_date": "2001-10-01",
+      "last_date": "2025-12-31",
+      "bytes": 313047,
+      "sha256": "b6538f388394ae8d24aae76c4f0eba21b656e03cc884d6c01f2dee03a523fdba",
+      "downloaded_at": "2026-09-28T19:14:45+00:00"
+    },
+    {
+      "ticker": "PG",
+      "file": "data/raw/PG.parquet",
+      "rows": 6103,
+      "first_date": "2001-10-01",
+      "last_date": "2025-12-31",
+      "bytes": 312941,
+      "sha256": "b6e22a74f0fd874f03868666de1a775e02ef89ad24a9f7783826d3192d5f67fe",
+      "downloaded_at": "2026-09-28T19:14:46+00:00"
+    },
+    {
+      "ticker": "XOM",
+      "file": "data/raw/XOM.parquet",
+      "rows": 6103,
+      "first_date": "2001-10-01",
+      "last_date": "2025-12-31",
+      "bytes": 314928,
+      "sha256": "2b1036b92df5b7180be0d0ff15463fb931c1347456a9cea4bef1d8c5ff014eb7",
+      "downloaded_at": "2026-09-28T19:14:48+00:00"
+    },
+    {
+      "ticker": "CVX",
+      "file": "data/raw/CVX.parquet",
+      "rows": 6103,
+      "first_date": "2001-10-01",
+      "last_date": "2025-12-31",
+      "bytes": 313756,
+      "sha256": "16c3bf35c9a188902ed889e1f4665cf6ca7af6287452c0feffed21cdeae396dc",
+      "downloaded_at": "2026-09-28T19:14:49+00:00"
+    },
+    {
+      "ticker": "COP",
+      "file": "data/raw/COP.parquet",
+      "rows": 6103,
+      "first_date": "2001-10-01",
+      "last_date": "2025-12-31",
+      "bytes": 314901,
+      "sha256": "f3f803fe0a395ca1d573ba0b7e644f9769f68db717ad57bf2e81d4e13187c5cd",
+      "downloaded_at": "2026-09-28T19:14:51+00:00"
+    },
+    {
+      "ticker": "VLO",
+      "file": "data/raw/VLO.parquet",
+      "rows": 6103,
+      "first_date": "2001-10-01",
+      "last_date": "2025-12-31",
+      "bytes": 314724,
+      "sha256": "bfec64054c5bdec3ee9ff80739a661fa6bd8448646dd05b206718f5d3c14a353",
+      "downloaded_at": "2026-09-28T19:14:52+00:00"
+    },
+    {
+      "ticker": "BRK-B",
+      "file": "data/raw/BRK-B.parquet",
+      "rows": 6103,
+      "first_date": "2001-10-01",
+      "last_date": "2025-12-31",
+      "bytes": 231286,
+      "sha256": "daeaaabb4933e07610de145e798ca59cd9fe67ba513048287f4ab3d02308f108",
+      "downloaded_at": "2026-09-28T19:14:54+00:00"
+    },
+    {
+      "ticker": "JPM",
+      "file": "data/raw/JPM.parquet",
+      "rows": 6103,
+      "first_date": "2001-10-01",
+      "last_date": "2025-12-31",
+      "bytes": 315319,
+      "sha256": "64e5b1bd5d46a3d3b5c39549cdb0284954682c00ef3d723ec93ce6d7ff97ba94",
+      "downloaded_at": "2026-09-28T19:14:56+00:00"
+    },
+    {
+      "ticker": "BAC",
+      "file": "data/raw/BAC.parquet",
+      "rows": 6103,
+      "first_date": "2001-10-01",
+      "last_date": "2025-12-31",
+      "bytes": 315681,
+      "sha256": "4340111d490742ecf9a93e834f35c8788b9d6c60d36fabf76dfb00348bfa4db4",
+      "downloaded_at": "2026-09-28T19:14:57+00:00"
+    },
+    {
+      "ticker": "MS",
+      "file": "data/raw/MS.parquet",
+      "rows": 6103,
+      "first_date": "2001-10-01",
+      "last_date": "2025-12-31",
+      "bytes": 314400,
+      "sha256": "3c82f36626b430eac2886af8b60a534d162ba533b8b7275e51a6a14628a58382",
+      "downloaded_at": "2026-09-28T19:14:59+00:00"
+    },
+    {
+      "ticker": "LLY",
+      "file": "data/raw/LLY.parquet",
+      "rows": 6103,
+      "first_date": "2001-10-01",
+      "last_date": "2025-12-31",
+      "bytes": 312376,
+      "sha256": "3d547b2739836cfb26ca71be2396a14eeedfe86ea9843e6af0faa022574bf3ee",
+      "downloaded_at": "2026-09-28T19:15:00+00:00"
+    },
+    {
+      "ticker": "JNJ",
+      "file": "data/raw/JNJ.parquet",
+      "rows": 6103,
+      "first_date": "2001-10-01",
+      "last_date": "2025-12-31",
+      "bytes": 313146,
+      "sha256": "3e0dcabf5b8c7da221d0ba5cd49b8568a249d821ca2ad3b3de7a1864332073e7",
+      "downloaded_at": "2026-09-28T19:15:02+00:00"
+    },
+    {
+      "ticker": "MRK",
+      "file": "data/raw/MRK.parquet",
+      "rows": 6103,
+      "first_date": "2001-10-01",
+      "last_date": "2025-12-31",
+      "bytes": 314420,
+      "sha256": "0f5d784d9cc020c146ff154990a13c04ac83e5e177405500192321fb278b1213",
+      "downloaded_at": "2026-09-28T19:15:03+00:00"
+    },
+    {
+      "ticker": "UNH",
+      "file": "data/raw/UNH.parquet",
+      "rows": 6103,
+      "first_date": "2001-10-01",
+      "last_date": "2025-12-31",
+      "bytes": 313519,
+      "sha256": "c526447d563af027ccfef34fcda3a15bd69ed4d51b90bd52aed65212ed9afc91",
+      "downloaded_at": "2026-09-28T19:15:05+00:00"
+    },
+    {
+      "ticker": "CAT",
+      "file": "data/raw/CAT.parquet",
+      "rows": 6103,
+      "first_date": "2001-10-01",
+      "last_date": "2025-12-31",
+      "bytes": 314110,
+      "sha256": "4930564284e8543b9dfb8d8f6229204e815ef162a3b8d43c1bca958a7aca5530",
+      "downloaded_at": "2026-09-28T19:15:06+00:00"
+    },
+    {
+      "ticker": "GE",
+      "file": "data/raw/GE.parquet",
+      "rows": 6103,
+      "first_date": "2001-10-01",
+      "last_date": "2025-12-31",
+      "bytes": 312606,
+      "sha256": "4547d01f8a9c62821ace99cbf91a7bc237011001196c49e2764e8b78c2e2cb6f",
+      "downloaded_at": "2026-09-28T19:15:08+00:00"
+    },
+    {
+      "ticker": "RTX",
+      "file": "data/raw/RTX.parquet",
+      "rows": 6103,
+      "first_date": "2001-10-01",
+      "last_date": "2025-12-31",
+      "bytes": 313900,
+      "sha256": "e4fa15ec7bfd63a04037378d410e6c0abb786d5dc6351685dd9443d7e636976e",
+      "downloaded_at": "2026-09-28T19:15:09+00:00"
+    },
+    {
+      "ticker": "DE",
+      "file": "data/raw/DE.parquet",
+      "rows": 6103,
+      "first_date": "2001-10-01",
+      "last_date": "2025-12-31",
+      "bytes": 312442,
+      "sha256": "e571d72bc489942c3b5e82c345e7198a180708b0279d32ebd2ecb458322bd9e7",
+      "downloaded_at": "2026-09-28T19:15:11+00:00"
+    },
+    {
+      "ticker": "NVDA",
+      "file": "data/raw/NVDA.parquet",
+      "rows": 6103,
+      "first_date": "2001-10-01",
+      "last_date": "2025-12-31",
+      "bytes": 315275,
+      "sha256": "09c7d36c5a766115392ecfce839c6c5307f75a7d33a4b5cee2f8502df55167af",
+      "downloaded_at": "2026-09-28T19:15:12+00:00"
+    },
+    {
+      "ticker": "AAPL",
+      "file": "data/raw/AAPL.parquet",
+      "rows": 6103,
+      "first_date": "2001-10-01",
+      "last_date": "2025-12-31",
+      "bytes": 318578,
+      "sha256": "4b66c5d51e34d0b8364528de6eb74fa796cec183b7599de67492509503836ccb",
+      "downloaded_at": "2026-09-28T19:15:14+00:00"
+    },
+    {
+      "ticker": "MSFT",
+      "file": "data/raw/MSFT.parquet",
+      "rows": 6103,
+      "first_date": "2001-10-01",
+      "last_date": "2025-12-31",
+      "bytes": 316131,
+      "sha256": "6c8671fcfc1387ae26e2f774b0dd7bdc94dc4dfb40d94b2f1d3d4452750141cd",
+      "downloaded_at": "2026-09-28T19:15:15+00:00"
+    },
+    {
+      "ticker": "MU",
+      "file": "data/raw/MU.parquet",
+      "rows": 6103,
+      "first_date": "2001-10-01",
+      "last_date": "2025-12-31",
+      "bytes": 302041,
+      "sha256": "cc7995869cc7669a29236291af89d77f28caadecb24659ce09eaebf21d4db257",
+      "downloaded_at": "2026-09-28T19:15:17+00:00"
+    },
+    {
+      "ticker": "LIN",
+      "file": "data/raw/LIN.parquet",
+      "rows": 6103,
+      "first_date": "2001-10-01",
+      "last_date": "2025-12-31",
+      "bytes": 309605,
+      "sha256": "80ab09407b0a50d3cd6e34a5de1d380bd3cecf7197d867a2f1f8d43f1754f5fd",
+      "downloaded_at": "2026-09-28T19:15:18+00:00"
+    },
+    {
+      "ticker": "NEM",
+      "file": "data/raw/NEM.parquet",
+      "rows": 6103,
+      "first_date": "2001-10-01",
+      "last_date": "2025-12-31",
+      "bytes": 313522,
+      "sha256": "5dca77726da497639dd983d44225d0193aea15e0892d6531bba0ad2622d9701f",
+      "downloaded_at": "2026-09-28T19:15:20+00:00"
+    },
+    {
+      "ticker": "FCX",
+      "file": "data/raw/FCX.parquet",
+      "rows": 6103,
+      "first_date": "2001-10-01",
+      "last_date": "2025-12-31",
+      "bytes": 314646,
+      "sha256": "ad31b36634ea939afa475728e1253aaa0d64686f7607986596713a24f4ef9c39",
+      "downloaded_at": "2026-09-28T19:15:22+00:00"
+    },
+    {
+      "ticker": "SHW",
+      "file": "data/raw/SHW.parquet",
+      "rows": 6103,
+      "first_date": "2001-10-01",
+      "last_date": "2025-12-31",
+      "bytes": 309363,
+      "sha256": "2a4c46849df73af84dc73fed15ebce847b341fe381f7631ab4084eaddb569643",
+      "downloaded_at": "2026-09-28T19:15:23+00:00"
+    },
+    {
+      "ticker": "WELL",
+      "file": "data/raw/WELL.parquet",
+      "rows": 6103,
+      "first_date": "2001-10-01",
+      "last_date": "2025-12-31",
+      "bytes": 309503,
+      "sha256": "8568613f4a2d3055b7104c6ee2eff36f15a475de041063d3ac16057625b9e53d",
+      "downloaded_at": "2026-09-28T19:15:24+00:00"
+    },
+    {
+      "ticker": "PLD",
+      "file": "data/raw/PLD.parquet",
+      "rows": 6103,
+      "first_date": "2001-10-01",
+      "last_date": "2025-12-31",
+      "bytes": 310432,
+      "sha256": "d7647ec8091ad2ef91c81651aea5ba132e711ba85daa1af44fd7e6fd2ff02dd1",
+      "downloaded_at": "2026-09-28T19:15:26+00:00"
+    },
+    {
+      "ticker": "EQIX",
+      "file": "data/raw/EQIX.parquet",
+      "rows": 6103,
+      "first_date": "2001-10-01",
+      "last_date": "2025-12-31",
+      "bytes": 303079,
+      "sha256": "71bd8830357c414d81ece5b78a1838fecaed73817c0b87553e9b2bdb457ce08c",
+      "downloaded_at": "2026-09-28T19:15:27+00:00"
+    },
+    {
+      "ticker": "AMT",
+      "file": "data/raw/AMT.parquet",
+      "rows": 6103,
+      "first_date": "2001-10-01",
+      "last_date": "2025-12-31",
+      "bytes": 307922,
+      "sha256": "561e4e522e0ef08de6e44eebc44ad0767000151fbbf26115ccd179c60963dcab",
+      "downloaded_at": "2026-09-28T19:15:28+00:00"
+    },
+    {
+      "ticker": "NEE",
+      "file": "data/raw/NEE.parquet",
+      "rows": 6103,
+      "first_date": "2001-10-01",
+      "last_date": "2025-12-31",
+      "bytes": 312001,
+      "sha256": "9c04538eb33bb119c93ab72c93b89d0b537ee926f315779a09e62b78069fc081",
+      "downloaded_at": "2026-09-28T19:15:30+00:00"
+    },
+    {
+      "ticker": "SO",
+      "file": "data/raw/SO.parquet",
+      "rows": 6103,
+      "first_date": "2001-10-01",
+      "last_date": "2025-12-31",
+      "bytes": 310572,
+      "sha256": "e970b47f7268ead535d2f9ea87f76fdc018466538d68f9693b0b51bdfde67246",
+      "downloaded_at": "2026-09-28T19:15:31+00:00"
+    },
+    {
+      "ticker": "DUK",
+      "file": "data/raw/DUK.parquet",
+      "rows": 6103,
+      "first_date": "2001-10-01",
+      "last_date": "2025-12-31",
+      "bytes": 310419,
+      "sha256": "303041b6a64ffe9922719965c0720b1b917187cba2cf24e81be25197fee87cc5",
+      "downloaded_at": "2026-09-28T19:15:33+00:00"
+    },
+    {
+      "ticker": "AEP",
+      "file": "data/raw/AEP.parquet",
+      "rows": 6103,
+      "first_date": "2001-10-01",
+      "last_date": "2025-12-31",
+      "bytes": 310376,
+      "sha256": "10c8a012749e5edfe087ee7382cdd0ae1e591c82f11ec9824c4ca15713f50809",
+      "downloaded_at": "2026-09-28T19:15:34+00:00"
+    },
+    {
+      "ticker": "SPY",
+      "file": "data/raw/SPY.parquet",
+      "rows": 6103,
+      "first_date": "2001-10-01",
+      "last_date": "2025-12-31",
+      "bytes": 319433,
+      "sha256": "49bf9bed9d40632156d55ce5273d6ebbaea7d2a43f2723e5794161ceaaae224f",
+      "downloaded_at": "2026-09-28T19:15:36+00:00"
+    },
+    {
+      "ticker": "^VIX",
+      "file": "data/raw/VIX.parquet",
+      "rows": 6103,
+      "first_date": "2001-10-01",
+      "last_date": "2025-12-31",
+      "bytes": 141769,
+      "sha256": "f72cfbc0eb9c7754ad8119470288dfc6e15bc98a35097893afcd147ca95098be",
+      "downloaded_at": "2026-09-28T19:15:37+00:00"
+    }
+  ]
+}
