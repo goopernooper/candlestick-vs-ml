@@ -30,6 +30,8 @@ Professor Danisman gave full latitude on design, so entries marked "Decided by: 
 | D-013 | Trading rules and costs | Proposed | |
 | D-014 | Regime definition | Proposed | |
 | D-015 | Preprint and authorship | Proposed | |
+| D-016 | Raw data storage | Decided | 2026-10-07 |
+| D-017 | Review of daily moves over 20% | Decided | 2026-10-07 |
 
 ---
 
@@ -151,6 +153,24 @@ Fill in **Decided** during the meeting, update the index, and commit.
 - **Proposed:** Agree on the author list and order, and whether to post a preprint before or after submission. First-time arXiv authors may need an endorsement, so raise it early.
 - **Decided:**
 - **Notes:**
+
+---
+
+## Data
+
+### D-016: Raw data storage
+- **Status:** Decided, 2026-10-07. Decided by: Joshua.
+- **Decision:** Raw price files (data/raw/) stay out of git. data/manifest.json, which records each file's row count, date range, and SHA-256 hash, is committed instead. The snapshot downloaded on 2026-09-28 is backed up as a zip in Google Drive.
+- **Why:** Yahoo's terms don't allow redistributing its data, and files committed to git stay in the history even if deleted later. The manifest still proves exactly which data produced the results.
+- **Consequences:** Run `python src/manifest.py --check` before experiments to confirm the data hasn't changed.
+
+### D-017: Review of daily moves over 20%
+- **Status:** Decided, 2026-10-07. Decided by: Joshua.
+- **Decision:** Every close-to-close return or overnight gap larger than 20% was reviewed: 125 moves across 21 tickers. ^VIX was excluded because moves that large are normal for a volatility index. Explanations for every move are in data/big_moves.csv. The 39 moves in the 22 selected stocks were checked individually. The 86 moves in alternates were explained in groups by episode (for example Equinix and American Tower in 2001–03, bank stocks in 2008–09) and will be checked individually if an alternate is promoted.
+- **Findings:** No missed splits or bad ticks were found. The GE spin-offs and the Linde and Prologis mergers produced no false jumps. One anomaly: BRK-B opened about 22% below the prior close on 2008-10-10. This disorderly opening trade also appears in Google Finance's data, and the day's close was confirmed against BRK-A's close. The row was kept as recorded.
+- **Second-source check:** The 8 selected-stock rows not tied to specific news were confirmed on 2026-10-07: marketwatch.com shows the same daily percentage move on each date. The rows are AMZN 2001-11-14 and 2001-11-26; NVDA 2002-11-08, 2003-02-14 and 2003-05-09; PLD 2008-11-12 and 2008-12-11; WELL 2020-03-19.
+- **Why:** A missed split or bad price would create a fake extreme candle that the models could learn from. Alternates don't enter the analysis unless promoted, so checking them in groups is enough for now.
+- **Consequences:** No changes to data/raw/.
 
 ---
 
