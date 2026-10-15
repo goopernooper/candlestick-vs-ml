@@ -219,3 +219,41 @@ def encoding_b_symbolic(df: pd.DataFrame, body_edges=None, wick_edge=None) -> pd
         "b_lower_long": col(lower), "b_symbol": col(symbol),
     }, index=df.index)
     return out
+
+
+# ---------------------------------------------------------------------------
+# Normalized OHLC (for the fair-features ablation)
+# ---------------------------------------------------------------------------
+NORMALIZED_OHLC = ["n_open", "n_high", "n_low", "n_close"]
+
+
+def normalized_ohlc(df: pd.DataFrame) -> pd.DataFrame:
+    """Each day's open, high, low and close minus the previous close, in ATR units.
+
+    n_close is the day's return measured in ATRs; n_open is the overnight gap.
+    Raw price levels are never used, so a $5 stock and a $500 stock are on the
+    same scale, exactly as in encoding B.
+
+    These four numbers carry the same information as continuous encoding B,
+    just arranged differently:
+        b_gap   = n_open
+        b_body  = n_close - n_open
+        b_upper = n_high - max(n_open, n_close)
+        b_lower = min(n_open, n_close) - n_low
+    That is the point of the ablation: models given these features see the
+    candle without any binning or named patterns, so any gap between them and
+    the pattern models comes from the binning and pattern rules, not from
+    having different information.
+
+    Uses the previous day's ATR, so day t's values are known at day t's close.
+    The first 15 rows are NaN while ATR warms up.
+    """
+    scale = lagged_atr(df)
+    scale = scale.where(scale > 0)
+    prev_close = df["Close"].shift(1)
+    return pd.DataFrame({
+        "n_open": (df["Open"] - prev_close) / scale,
+        "n_high": (df["High"] - prev_close) / scale,
+        "n_low": (df["Low"] - prev_close) / scale,
+        "n_close": (df["Close"] - prev_close) / scale,
+    }, index=df.index)
