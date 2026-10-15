@@ -6,6 +6,8 @@ Contents
 """
 from __future__ import annotations
 
+from pathlib import Path
+
 import numpy as np
 import pandas as pd
 import talib
@@ -151,5 +153,69 @@ def encoding_b_continuous(df: pd.DataFrame) -> pd.DataFrame:
         "b_upper": (h - top).clip(lower=0) / scale,
         "b_lower": (bottom - l).clip(lower=0) / scale,
         "b_gap": (o - c.shift(1)) / scale,
+    }, index=df.index)
+    return out
+
+
+# ---------------------------------------------------------------------------
+# Encoding B (symbolic): each candle as one of 20 symbols
+# ---------------------------------------------------------------------------
+from functools import lru_cache  # noqa: E402
+
+import yaml  # noqa: E402
+
+CONFIG_PATH = Path(__file__).resolve().parents[1] / "config.yaml"
+BODY_LEVELS = ["--", "-", "0", "+", "++"]  # big down, down, doji-like, up, big up
+N_SYMBOLS = 20
+
+
+@lru_cache(maxsize=1)
+def load_config() -> dict:
+    with open(CONFIG_PATH) as f:
+        return yaml.safe_load(f)
+
+
+def symbol_label(symbol: int) -> str:
+    """Readable name for a symbol number, e.g. 14 -> '+ U l' (up body, long upper
+    wick, short lower wick). Capital U/L means the wick is long."""
+    body, rest = divmod(int(symbol), 4)
+    upper, lower = divmod(rest, 2)
+    return f"{BODY_LEVELS[body]} {'U' if upper else 'u'} {'L' if lower else 'l'}"
+
+
+def encoding_b_symbolic(df: pd.DataFrame, body_edges=None, wick_edge=None) -> pd.DataFrame:
+    """Bin continuous encoding B into one symbol per day (0-19).
+
+    b_body_level   0-4: big down, down, doji-like, up, big up (see config.yaml)
+    b_upper_long   1 if the upper wick is at least `wick_edge` ATR, else 0
+    b_lower_long   same for the lower wick
+    b_symbol       body_level * 4 + upper_long * 2 + lower_long
+
+    The edges come from config.yaml unless passed in. They are fixed numbers,
+    not fitted to the data, so the encoding can't leak information across time.
+    The first 15 days are missing (<NA>) while ATR warms up.
+    """
+    if body_edges is None or wick_edge is None:
+        cfg = load_config()["encoding_b"]
+        body_edges = cfg["body_edges"] if body_edges is None else body_edges
+        wick_edge = cfg["wick_edge"] if wick_edge is None else wick_edge
+    body_edges = np.asarray(body_edges, dtype=float)
+    wick_edge = float(wick_edge)
+
+    cont = encoding_b_continuous(df)
+    ready = cont.notna().all(axis=1).to_numpy()
+    body = np.digitize(cont["b_body"].to_numpy(), body_edges)          # 0..4
+    upper = (cont["b_upper"].to_numpy() >= wick_edge).astype(int)
+    lower = (cont["b_lower"].to_numpy() >= wick_edge).astype(int)
+    symbol = body * 4 + upper * 2 + lower
+
+    def col(values):
+        arr = pd.array(np.where(ready, values, 0), dtype="Int8")
+        arr[~ready] = pd.NA  # missing before ATR is ready
+        return arr
+
+    out = pd.DataFrame({
+        "b_body_level": col(body), "b_upper_long": col(upper),
+        "b_lower_long": col(lower), "b_symbol": col(symbol),
     }, index=df.index)
     return out

@@ -1,0 +1,22 @@
+# Project settings. Values here are fixed in advance and changed only deliberately;
+# log any change in DECISIONS.md.
+
+encoding_b:
+  # Symbolic encoding B: each candle's body and wicks, in units of the previous
+  # day's ATR(14), are binned into 5 x 2 x 2 = 20 symbols. The gap is left out
+  # to keep the alphabet small.
+  #
+  # Body (Close - Open), 5 levels:
+  #   below -0.6   big down
+  #   -0.6 to -0.1 down
+  #   -0.1 to 0.1  doji-like (almost no body)
+  #   0.1 to 0.6   up
+  #   0.6 and up   big up
+  # A value exactly on an edge goes to the level above it.
+  body_edges: [-0.6, -0.1, 0.1, 0.6]
+  # Each wick is "long" at 0.25 ATR or more, otherwise "short".
+  wick_edge: 0.25
+  # The edges were chosen in advance and checked only on the first three years,
+  # roughly the first training window, so no test-period data shaped them.
+  # Report: results/encoding_b_edges_check.csv (python src/encoding_b_report.py)
+  checked_on: {start: "2002-01-02", end: "2004-12-31"}
