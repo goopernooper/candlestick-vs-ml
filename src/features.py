@@ -118,3 +118,38 @@ def encoding_a(df: pd.DataFrame, raw: bool = False) -> pd.DataFrame:
     cols = {pattern_column(name): getattr(talib, name)(o, h, l, c) for name in PATTERNS}
     out = pd.DataFrame(cols, index=df.index)
     return out if raw else np.sign(out).astype(np.int8)
+
+
+# ---------------------------------------------------------------------------
+# Encoding B (continuous): candle shape measured in ATR units
+# ---------------------------------------------------------------------------
+B_CONTINUOUS = ["b_body", "b_upper", "b_lower", "b_gap"]
+
+
+def encoding_b_continuous(df: pd.DataFrame) -> pd.DataFrame:
+    """Four numbers describing each day's candle, divided by the previous day's ATR.
+
+    b_body   Close - Open. Signed: positive for an up candle, negative for a down one.
+    b_upper  High - max(Open, Close). The upper wick, always >= 0.
+    b_lower  min(Open, Close) - Low. The lower wick, always >= 0.
+    b_gap    Open - previous Close. Signed: positive when the day opens higher.
+
+    Dividing by lagged ATR puts every stock and every era on the same scale: a
+    body of 1.0 means "as big as a typical day's range lately", whether the stock
+    trades at $5 or $500. Because ATR is from the previous close, day t's values
+    use only information available at day t's close.
+
+    The first 15 rows are NaN while ATR warms up (the 2001 buffer covers this).
+    """
+    scale = lagged_atr(df)
+    scale = scale.where(scale > 0)  # a zero ATR would divide by zero; leave those days NaN
+    o, h, l, c = (df[col] for col in OHLC)
+    top, bottom = np.maximum(o, c), np.minimum(o, c)
+    out = pd.DataFrame({
+        "b_body": (c - o) / scale,
+        # Adjusted prices carry tiny rounding errors, so clip wicks at zero.
+        "b_upper": (h - top).clip(lower=0) / scale,
+        "b_lower": (bottom - l).clip(lower=0) / scale,
+        "b_gap": (o - c.shift(1)) / scale,
+    }, index=df.index)
+    return out
