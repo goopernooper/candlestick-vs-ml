@@ -49,3 +49,7 @@ splits:
   # years, score on the last tuning_years years (with the same purge gap in
   # between), then refit the chosen settings on the whole training window.
   tuning_years: 1
+
+# Random seed for everything random in the project (the random baseline now,
+# model training later), so every result can be reproduced exactly.
+seed: 20261016
