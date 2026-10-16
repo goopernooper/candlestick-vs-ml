@@ -89,3 +89,95 @@ def summarize(preds: pd.DataFrame, by=("model",)) -> pd.DataFrame:
         key = key if isinstance(key, tuple) else (key,)
         rows.append({**dict(zip(by, key)), **classification_metrics(g["up"], g["pred"])})
     return pd.DataFrame(rows, columns=by + METRIC_COLUMNS)
+
+
+# ---------------------------------------------------------------------------
+# Backtest
+# ---------------------------------------------------------------------------
+from features import load_config  # noqa: E402
+
+PERFORMANCE_COLUMNS = ["days", "ann_return", "ann_volatility", "sharpe", "max_drawdown",
+                       "turnover_per_year", "cost_per_year"]
+
+
+def positions(pred, strategy: str) -> np.ndarray:
+    """Position held from day t's close to day t+1's close, per unit of capital."""
+    pred = np.asarray(pred, dtype=int)
+    if strategy == "long_short":
+        return np.where(pred == 1, 1.0, -1.0)
+    if strategy == "long_flat":
+        return np.where(pred == 1, 1.0, 0.0)
+    raise ValueError(f"unknown strategy {strategy!r}")
+
+
+def stock_returns(preds: pd.DataFrame, strategy: str, cost_bps: float) -> pd.DataFrame:
+    """Daily results for each stock, for one model's predictions.
+
+    Each stock's positions run continuously across the test years (every day
+    from 2005 on is a test day of exactly one fold). The first position is
+    paid for as a trade from cash. Days without a next-day return (the last
+    day of the data) are dropped.
+    """
+    df = preds[preds["fwd_return"].notna()].copy()
+    df = df.reset_index().rename(columns={df.index.name or "index": "date"})
+    df = df.sort_values(["ticker", "date"])
+    df["position"] = positions(df["pred"], strategy)
+    previous = df.groupby("ticker")["position"].shift(1).fillna(0.0)
+    df["turnover"] = (df["position"] - previous).abs()
+    df["gross"] = df["position"] * df["fwd_return"]
+    df["cost"] = df["turnover"] * cost_bps / 10_000
+    df["net"] = df["gross"] - df["cost"]
+    return df.set_index("date")
+
+
+def portfolio_returns(stock_daily: pd.DataFrame, column: str = "net") -> pd.Series:
+    """Equal-weight portfolio: each day's return is the average across stocks."""
+    return stock_daily.groupby(level="date")[column].mean().sort_index()
+
+
+def performance(daily: pd.Series, days_per_year: int | None = None) -> dict:
+    """Annualized return (compounded), volatility, Sharpe ratio and maximum drawdown.
+
+    The Sharpe ratio here is mean / standard deviation of daily returns times
+    sqrt(days_per_year), with no risk-free rate subtracted.
+    """
+    days_per_year = days_per_year or load_config()["backtest"]["trading_days_per_year"]
+    r = pd.Series(daily, dtype=float).dropna()
+    n = len(r)
+    if n == 0:
+        return {"days": 0, "ann_return": np.nan, "ann_volatility": np.nan,
+                "sharpe": np.nan, "max_drawdown": np.nan}
+    growth = (1 + r).cumprod()
+    sd = r.std(ddof=1) if n > 1 else 0.0
+    return {
+        "days": n,
+        "ann_return": growth.iloc[-1] ** (days_per_year / n) - 1,
+        "ann_volatility": sd * np.sqrt(days_per_year),
+        # Rounding leaves a constant series with a tiny nonzero spread; treat it as zero.
+        "sharpe": r.mean() / sd * np.sqrt(days_per_year) if sd > 1e-12 else np.nan,
+        "max_drawdown": float((growth / growth.cummax() - 1).min()),   # worst fall from a peak
+    }
+
+
+def backtest(preds: pd.DataFrame, strategies=None, costs_bps=None) -> pd.DataFrame:
+    """One row per model x strategy x cost level, with the performance figures.
+
+    turnover_per_year  average units traded per stock per year (1 = one full
+                       position bought or sold); cost_per_year is what that
+                       turnover cost, as a share of capital.
+    """
+    check_not_holdout(preds.index)
+    cfg = load_config()["backtest"]
+    strategies = cfg["strategies"] if strategies is None else list(strategies)
+    costs_bps = [cfg["cost_bps_per_side"]] if costs_bps is None else list(costs_bps)
+    per_year = cfg["trading_days_per_year"]
+    rows = []
+    for model, g in preds.groupby("model", sort=True):
+        for strategy in strategies:
+            for bps in costs_bps:
+                daily = stock_returns(g, strategy, bps)
+                perf = performance(portfolio_returns(daily), per_year)
+                rows.append({"model": model, "strategy": strategy, "cost_bps": bps, **perf,
+                             "turnover_per_year": daily["turnover"].groupby(level="date").mean().mean() * per_year,
+                             "cost_per_year": portfolio_returns(daily, "cost").mean() * per_year})
+    return pd.DataFrame(rows, columns=["model", "strategy", "cost_bps"] + PERFORMANCE_COLUMNS)

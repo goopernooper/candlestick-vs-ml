@@ -53,3 +53,17 @@ splits:
 # Random seed for everything random in the project (the random baseline now,
 # model training later), so every result can be reproduced exactly.
 seed: 20261016
+
+backtest:
+  # Trading rules, fixed before any results are seen (DECISIONS.md D-013).
+  # A position is taken at day t's close using day t's prediction and held
+  # until day t+1's close. Every stock gets an equal share of capital.
+  #   long_short: +1 if the model predicts up, -1 if down
+  #   long_flat:  +1 if up, 0 (in cash) if down
+  # Dead-zone days are traded like any other day: costs still apply.
+  strategies: [long_short, long_flat]
+  # Cost per side in basis points (1 bp = 0.01%), charged on every unit of
+  # position changed. Flipping long to short trades 2 units, so it costs 2 sides.
+  cost_bps_per_side: 5
+  cost_grid_bps: [0, 1, 2, 5, 10, 20]
+  trading_days_per_year: 252
