@@ -20,3 +20,15 @@ encoding_b:
   # roughly the first training window, so no test-period data shaped them.
   # Report: results/encoding_b_edges_check.csv (python src/encoding_b_report.py)
   checked_on: {start: "2002-01-02", end: "2004-12-31"}
+
+labels:
+  # Primary target: next-day close-to-close return and its direction.
+  horizon: 1
+  # Dead zone: a day whose next-day return is smaller than dead_zone_k times
+  # the stock's recent volatility is too close to zero to call up or down.
+  # Those days are dropped from training labels and classification metrics,
+  # but kept in the backtest (trading costs still apply on them).
+  dead_zone_k: 0.1
+  # Recent volatility = standard deviation of the last vol_window daily
+  # returns, ending on the day the prediction is made (no future data).
+  vol_window: 20
