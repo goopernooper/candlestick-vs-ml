@@ -32,3 +32,16 @@ labels:
   # Recent volatility = standard deviation of the last vol_window daily
   # returns, ending on the day the prediction is made (no future data).
   vol_window: 20
+
+splits:
+  # Walk-forward validation: train on everything from train_start up to the
+  # test year, test on one calendar year, then move forward a year.
+  train_start: "2002-01-02"
+  first_test_year: 2005
+  last_test_year: 2022
+  # Final holdout, used once at the end. Leave unlock_holdout false until
+  # ANALYSIS_PLAN.md is frozen and tagged (week 8), then switch it on for the
+  # single holdout run in week 9 and log that in DECISIONS.md.
+  holdout_years: [2023, 2025]
+  unlock_holdout: false
+  # The purge gap between training and test equals labels.horizon (above).
