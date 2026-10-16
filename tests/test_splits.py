@@ -97,3 +97,56 @@ def test_select_works_on_stacked_stocks():
     tr, te = f.select(stacked, "train"), f.select(stacked, "test")
     assert len(tr) == 3 * len(f.train) and len(te) == 3 * len(f.test)
     assert tr.index.max() < te.index.min()
+
+
+# ---------------------------------------------------------------- tuning sets
+
+def test_tuning_year_is_the_last_training_year():
+    for f in walk_forward(CAL):
+        t = f.tuning()
+        assert set(t.test.year) == {f.test_year - 1}
+
+
+@pytest.mark.parametrize("horizon", [1, 5])
+def test_tuning_split_partitions_the_training_window(horizon):
+    for f in walk_forward(CAL, horizon=horizon):
+        t = f.tuning()
+        # fit, inner purge and tuning set together are exactly the training window, in order
+        assert t.train.append(t.purged).append(t.test).equals(f.train)
+        assert len(t.purged) == horizon
+        assert t.train[-1] < t.purged[0] and t.purged[-1] < t.test[0]
+        # the tuning set ends before the outer purge and the test year
+        assert t.test[-1] < f.purged[0] < f.test[0]
+
+
+@pytest.mark.parametrize("horizon", [1, 5])
+def test_fit_labels_never_see_tuning_year_prices(horizon):
+    """The same leak check as the outer split, one level down."""
+    rng = np.random.default_rng(1)
+    close = pd.Series(100 * np.exp(np.cumsum(rng.normal(0, 0.02, len(CAL)))), index=CAL)
+    df = pd.DataFrame({"Open": close, "High": close * 1.01, "Low": close * 0.99, "Close": close})
+    for f in walk_forward(CAL, horizon=horizon)[::6]:
+        t = f.tuning()
+        future = df.copy()
+        future.loc[t.test[0]:] *= 1.5
+        pd.testing.assert_frame_equal(make_labels(df, horizon=horizon).loc[t.train],
+                                      make_labels(future, horizon=horizon).loc[t.train])
+        assert not make_labels(df, horizon=horizon).loc[t.purged].equals(
+            make_labels(future, horizon=horizon).loc[t.purged])
+
+
+def test_tuning_never_touches_the_test_year_or_holdout():
+    for f in walk_forward(CAL, unlock_holdout=True):
+        t = f.tuning()
+        for part in (t.train, t.purged, t.test):
+            assert part.max() < f.test[0]
+
+
+def test_first_fold_still_has_data_to_fit():
+    first = walk_forward(CAL)[0].tuning()
+    assert set(first.train.year) == {2002, 2003} and set(first.test.year) == {2004}
+
+
+def test_too_many_tuning_years_is_an_error():
+    with pytest.raises(ValueError):
+        walk_forward(CAL)[0].tuning(years=3)    # 2002-2004 would leave nothing to fit

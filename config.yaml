@@ -45,3 +45,7 @@ splits:
   holdout_years: [2023, 2025]
   unlock_holdout: false
   # The purge gap between training and test equals labels.horizon (above).
+  # Hyperparameters are tuned inside each training window: fit on the earlier
+  # years, score on the last tuning_years years (with the same purge gap in
+  # between), then refit the chosen settings on the whole training window.
+  tuning_years: 1

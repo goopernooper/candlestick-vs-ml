@@ -13,6 +13,11 @@ Splits are by calendar date, never by row number, so they stay correct when
 all stocks are stacked into one table: every stock's rows for a given date
 land in the same part.
 
+Hyperparameters are tuned inside each fold's training window, never on its
+test year: fold.tuning() splits the training window into a fit part and a
+tuning part (its last tuning_years years), with the same purge gap between
+them. After tuning, the chosen settings are refit on the whole training window.
+
 2023-2025 is the final holdout. While config.yaml has unlock_holdout: false,
 no fold tests on those years, and check_not_holdout() raises an error if any
 code tries to use them.
@@ -36,6 +41,26 @@ class Fold:
     train: pd.DatetimeIndex   # trading days the models learn from
     purged: pd.DatetimeIndex  # dropped: their labels reach into the test year
     test: pd.DatetimeIndex    # trading days the models are scored on
+    horizon: int = 1
+
+    def tuning(self, years: int | None = None) -> "Fold":
+        """Split this fold's training window for hyperparameter tuning.
+
+        Returns a Fold whose `test` is the last `years` years of the training
+        window (the tuning set), whose `train` is everything before it (the fit
+        set), and whose `purged` is the `horizon` days in between. The test year
+        of this fold is never touched.
+        """
+        years = load_config()["splits"]["tuning_years"] if years is None else years
+        first_tuning_year = self.test_year - years
+        tune = self.train[self.train.year >= first_tuning_year]
+        start = self.train.get_loc(tune[0])
+        if start - self.horizon <= 0:
+            raise ValueError(f"fold {self.test_year}: no fit data left before the tuning set")
+        return Fold(test_year=first_tuning_year,
+                    train=self.train[:start - self.horizon],
+                    purged=self.train[start - self.horizon:start],
+                    test=tune, horizon=self.horizon)
 
     def select(self, frame: pd.DataFrame, part: str) -> pd.DataFrame:
         """Rows of `frame` (indexed by date, dates may repeat across stocks)
@@ -43,10 +68,13 @@ class Fold:
         return frame[frame.index.isin(getattr(self, part))]
 
     def describe(self) -> dict:
+        inner = self.tuning()
         return {"test_year": self.test_year,
-                "train_from": self.train[0].date(), "train_to": self.train[-1].date(),
-                "purged": ", ".join(str(d.date()) for d in self.purged),
-                "test_from": self.test[0].date(), "test_to": self.test[-1].date(),
+                "fit": f"{inner.train[0].date()} to {inner.train[-1].date()}",
+                "tune": f"{inner.test[0].date()} to {inner.test[-1].date()}",
+                "test": f"{self.test[0].date()} to {self.test[-1].date()}",
+                "purged": ", ".join(str(d.date()) for d in list(inner.purged) + list(self.purged)),
+                "fit_days": len(inner.train), "tune_days": len(inner.test),
                 "train_days": len(self.train), "test_days": len(self.test)}
 
 
@@ -93,7 +121,7 @@ def walk_forward(calendar, horizon: int | None = None, unlock_holdout: bool | No
         start = cal.get_loc(test[0])          # position of the first test day
         train = cal[:start - horizon]         # everything before, minus the purge gap
         purged = cal[start - horizon:start]   # labels of these days reach into the test year
-        folds.append(Fold(year, train, purged, test))
+        folds.append(Fold(year, train, purged, test, horizon))
     return folds
 
 
