@@ -257,3 +257,17 @@ def normalized_ohlc(df: pd.DataFrame) -> pd.DataFrame:
         "n_low": (df["Low"] - prev_close) / scale,
         "n_close": (df["Close"] - prev_close) / scale,
     }, index=df.index)
+
+
+# ---------------------------------------------------------------------------
+# Registry of every feature set. tests/test_leakage.py runs each one through the
+# look-ahead checks, and fails if a feature function exists that isn't listed here.
+# When you add an encoding, add it here too.
+# ---------------------------------------------------------------------------
+FEATURE_SETS = {
+    "lagged_atr": lambda df: lagged_atr(df).to_frame(),
+    "encoding_a": encoding_a,
+    "encoding_b_continuous": encoding_b_continuous,
+    "encoding_b_symbolic": encoding_b_symbolic,
+    "normalized_ohlc": normalized_ohlc,
+}
