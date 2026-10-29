@@ -1,3 +1,4 @@
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[codz]
@@ -5,6 +6,8 @@ __pycache__/
 
 # C extensions
 *.so
+
+
 
 # Distribution / packaging
 .Python
@@ -217,3 +220,8 @@ __marimo__/
 # Streamlit
 .streamlit/secrets.toml
    data/raw/
+      results/**/predictions.parquet
+data/raw/
+*.zip
+results/**/predictions.parquet
+.vscode/

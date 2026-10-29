@@ -260,6 +260,28 @@ def normalized_ohlc(df: pd.DataFrame) -> pd.DataFrame:
 
 
 # ---------------------------------------------------------------------------
+# Encoding B over a window of days (what the ML models see)
+# ---------------------------------------------------------------------------
+def encoding_b_window(df: pd.DataFrame, days: int | None = None) -> pd.DataFrame:
+    """Continuous encoding B for today and the previous days.
+
+    With days=3: b_body, b_upper, b_lower, b_gap for today, the same four with
+    the suffix _lag1 for yesterday, and _lag2 for the day before. Lags are taken
+    within this one stock's history (one stock per call), so they never mix
+    stocks, and they only reach backward, so they can't see the future.
+    """
+    days = load_config()["encoding_b"]["window_days"] if days is None else days
+    cont = encoding_b_continuous(df)
+    parts = [cont] + [cont.shift(k).add_suffix(f"_lag{k}") for k in range(1, days)]
+    return pd.concat(parts, axis=1)
+
+
+def window_columns(days: int | None = None) -> list[str]:
+    days = load_config()["encoding_b"]["window_days"] if days is None else days
+    return B_CONTINUOUS + [f"{c}_lag{k}" for k in range(1, days) for c in B_CONTINUOUS]
+
+
+# ---------------------------------------------------------------------------
 # Registry of every feature set. tests/test_leakage.py runs each one through the
 # look-ahead checks, and fails if a feature function exists that isn't listed here.
 # When you add an encoding, add it here too.
@@ -268,6 +290,7 @@ FEATURE_SETS = {
     "lagged_atr": lambda df: lagged_atr(df).to_frame(),
     "encoding_a": encoding_a,
     "encoding_b_continuous": encoding_b_continuous,
+    "encoding_b_window": lambda df: encoding_b_window(df),
     "encoding_b_symbolic": encoding_b_symbolic,
     "normalized_ohlc": normalized_ohlc,
 }

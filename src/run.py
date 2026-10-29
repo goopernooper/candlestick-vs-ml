@@ -2,13 +2,15 @@
 
 Usage
 -----
-    python src/run.py                 # results table v0: the four baselines
+    python src/run.py --version v1                    # every model in EXPERIMENTS
+    python src/run.py --version v0 --models majority always_long previous_day random
 
 Steps:
   1. Check data/raw against data/manifest.json (stop if the data changed).
   2. Build the pooled table of features and labels for the 22 selected stocks.
   3. For each fold (test years 2005-2022): fit each model on the training days
-     that have a label, then predict every test day.
+     that have a label, using only that model's feature columns, then predict
+     every test day.
   4. Score the predictions (accuracy, balanced accuracy, MCC) and backtest them
      (long/short and long/flat at the headline cost).
   5. Write everything to results/<version>/, stamped with the git commit, and
@@ -32,8 +34,9 @@ import pandas as pd
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from dataset import build_table  # noqa: E402
 from evaluate import backtest, summarize  # noqa: E402
-from features import load_config  # noqa: E402
+from features import PATTERNS, load_config, pattern_column, window_columns  # noqa: E402
 from models.baselines import AlwaysLong, Majority, PreviousDay, RandomGuess  # noqa: E402
+from models.ml import LightGBMModel  # noqa: E402
 from splits import walk_forward  # noqa: E402
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -51,23 +54,57 @@ def baseline_models() -> dict:
     }
 
 
-def run_models(table: pd.DataFrame, folds, models: dict, feature_cols) -> pd.DataFrame:
-    """The predictions table described in evaluate.py, for every model and fold."""
-    feature_cols = list(feature_cols)
+def experiments() -> dict:
+    """Every model the runner knows: name -> (feature sets to build, columns, model maker).
+
+    Names follow model_encoding: lightgbm_a uses encoding A's 61 pattern columns,
+    lightgbm_b uses continuous encoding B over a window of days.
+    """
+    seed = load_config()["seed"]
+    a_cols = [pattern_column(p) for p in PATTERNS]
+    b_cols = window_columns()
+    spec = {name: {"feature_sets": ["normalized_ohlc"], "features": ["n_close"], "make": make}
+            for name, make in baseline_models().items()}
+    spec["lightgbm_a"] = {"feature_sets": ["encoding_a"], "features": a_cols,
+                          "make": lambda fold: LightGBMModel(seed=seed + fold.test_year)}
+    spec["lightgbm_b"] = {"feature_sets": ["encoding_b_window"], "features": b_cols,
+                          "make": lambda fold: LightGBMModel(seed=seed + fold.test_year)}
+    return spec
+
+
+def run_experiments(table: pd.DataFrame, folds, specs: dict, progress=None) -> pd.DataFrame:
+    """The predictions table described in evaluate.py, for every model and fold.
+
+    Each model trains only on its own feature columns, on training days with a
+    label, and predicts every test day where its features exist. All models must
+    end up predicting the same stock-days, so they are compared on equal terms.
+    """
     out = []
     for fold in folds:
-        train = fold.select(table, "train")
-        train = train[train["up"].notna() & train[feature_cols].notna().all(axis=1)]
-        test = fold.select(table, "test")
-        test = test[test[feature_cols].notna().all(axis=1)]
-        if test.empty:
-            continue
-        for name, make in models.items():
-            model = make(fold).fit(train[feature_cols], train["up"].astype(int))
-            p = np.asarray(model.predict_proba(test[feature_cols]), dtype=float)
+        train_all, test_all = fold.select(table, "train"), fold.select(table, "test")
+        for name, sp in specs.items():
+            cols = list(sp["features"])
+            train = train_all[train_all["up"].notna() & train_all[cols].notna().all(axis=1)]
+            test = test_all[test_all[cols].notna().all(axis=1)]
+            if test.empty:
+                continue
+            model = sp["make"](fold).fit(train[cols], train["up"].astype(int))
+            p = np.asarray(model.predict_proba(test[cols]), dtype=float)
             out.append(test[["ticker", "up", "fwd_return"]].assign(
                 model=name, test_year=fold.test_year, p_up=p, pred=(p >= 0.5).astype(int)))
-    return pd.concat(out)
+        if progress:
+            progress(fold)
+    preds = pd.concat(out)
+    counts = preds.groupby("model").size()
+    if counts.nunique() > 1:
+        raise RuntimeError(f"models predicted different numbers of days: {counts.to_dict()}")
+    return preds
+
+
+def run_models(table: pd.DataFrame, folds, models: dict, feature_cols) -> pd.DataFrame:
+    """Shortcut: run several models that all use the same feature columns."""
+    return run_experiments(table, folds, {name: {"features": list(feature_cols), "make": make}
+                                          for name, make in models.items()})
 
 
 def git_stamp() -> str:
@@ -111,8 +148,16 @@ def baseline_checks(summary: pd.DataFrame) -> list[tuple[str, bool]]:
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__.split("\n")[0])
-    parser.add_argument("--version", default="v0", help="results go in results/<version>/")
+    parser.add_argument("--version", default="v1", help="results go in results/<version>/")
+    parser.add_argument("--models", nargs="+", help="which models to run (default: all)")
     args = parser.parse_args()
+    specs = experiments()
+    if args.models:
+        unknown = set(args.models) - set(specs)
+        if unknown:
+            print(f"Unknown models: {sorted(unknown)}. Available: {sorted(specs)}")
+            return 1
+        specs = {name: specs[name] for name in args.models}
 
     import manifest
     if not manifest.check(quiet=True):
@@ -125,9 +170,13 @@ def main() -> int:
     if stamp.endswith("+dirty"):
         print("Note: uncommitted changes. Results are stamped +dirty; commit before using them in the paper.\n")
 
-    table = build_table(feature_sets=["normalized_ohlc"])
+    feature_sets = sorted({fs for sp in specs.values() for fs in sp["feature_sets"]})
+    table = build_table(feature_sets=feature_sets)
     folds = walk_forward(table.index)
-    preds = run_models(table, folds, baseline_models(), feature_cols=["n_close"])
+    print(f"Running {len(specs)} models on {len(folds)} folds: ", end="", flush=True)
+    preds = run_experiments(table, folds, specs,
+                            progress=lambda f: print(f.test_year, end=" ", flush=True))
+    print("\n")
 
     out = ROOT / "results" / args.version
     out.mkdir(parents=True, exist_ok=True)
@@ -140,6 +189,7 @@ def main() -> int:
     preds.to_parquet(out / "predictions.parquet")
     (out / "run_info.json").write_text(json.dumps({
         "git_commit": stamp, "run_at": run_at, "folds": [f.test_year for f in folds],
+        "models": {name: sp["features"] for name, sp in specs.items()},
         "stocks": int(table["ticker"].nunique()), "test_days": int(len(preds) // preds["model"].nunique()),
         "first_date": str(table.index.min().date()), "last_date": str(table.index.max().date()),
         "config": cfg}, indent=2, default=str) + "\n")

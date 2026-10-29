@@ -16,6 +16,10 @@ encoding_b:
   body_edges: [-0.6, -0.1, 0.1, 0.6]
   # Each wick is "long" at 0.25 ATR or more, otherwise "short".
   wick_edge: 0.25
+  # Models given continuous encoding B see a window of this many days (today and
+  # the days before it), since a single candle can't show multi-day patterns.
+  # Encoding A's patterns already look back up to five candles on their own.
+  window_days: 3
   # The edges were chosen in advance and checked only on the first three years,
   # roughly the first training window, so no test-period data shaped them.
   # Report: results/encoding_b_edges_check.csv (python src/encoding_b_report.py)
@@ -67,3 +71,18 @@ backtest:
   cost_bps_per_side: 5
   cost_grid_bps: [0, 1, 2, 5, 10, 20]
   trading_days_per_year: 252
+
+models:
+  lightgbm:
+    # Fixed, conservative settings for the first end-to-end run (week 4).
+    # Week 6 replaces these with settings tuned inside each training window,
+    # with the same tuning budget for every model family.
+    n_estimators: 200
+    learning_rate: 0.05
+    num_leaves: 15
+    min_child_samples: 500   # with ~100,000 pooled rows, keeps leaves from fitting noise
+    subsample: 0.8
+    subsample_freq: 1
+    colsample_bytree: 0.8
+    reg_lambda: 1.0
+    n_jobs: 4                # fixed thread count: LightGBM is only exactly reproducible with the same count
