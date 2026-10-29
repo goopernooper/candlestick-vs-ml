@@ -276,6 +276,12 @@ def encoding_b_window(df: pd.DataFrame, days: int | None = None) -> pd.DataFrame
     return pd.concat(parts, axis=1)
 
 
+def max_window_days() -> int:
+    """Longest window any model needs, so one table holds every model's columns."""
+    cfg = load_config()
+    return max([cfg["encoding_b"]["window_days"], *cfg["models"]["knn"]["windows"]])
+
+
 def window_columns(days: int | None = None) -> list[str]:
     days = load_config()["encoding_b"]["window_days"] if days is None else days
     return B_CONTINUOUS + [f"{c}_lag{k}" for k in range(1, days) for c in B_CONTINUOUS]
@@ -290,7 +296,8 @@ FEATURE_SETS = {
     "lagged_atr": lambda df: lagged_atr(df).to_frame(),
     "encoding_a": encoding_a,
     "encoding_b_continuous": encoding_b_continuous,
-    "encoding_b_window": lambda df: encoding_b_window(df),
+    # Built with the longest window any model uses; each model selects its own days.
+    "encoding_b_window": lambda df: encoding_b_window(df, days=max_window_days()),
     "encoding_b_symbolic": encoding_b_symbolic,
     "normalized_ohlc": normalized_ohlc,
 }

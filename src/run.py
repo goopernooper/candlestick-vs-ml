@@ -37,6 +37,7 @@ from evaluate import backtest, summarize  # noqa: E402
 from features import PATTERNS, load_config, pattern_column, window_columns  # noqa: E402
 from models.baselines import AlwaysLong, Majority, PreviousDay, RandomGuess  # noqa: E402
 from models.ml import LightGBMModel  # noqa: E402
+from models.pattern import KNNModel  # noqa: E402
 from splits import walk_forward  # noqa: E402
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -58,7 +59,8 @@ def experiments() -> dict:
     """Every model the runner knows: name -> (feature sets to build, columns, model maker).
 
     Names follow model_encoding: lightgbm_a uses encoding A's 61 pattern columns,
-    lightgbm_b uses continuous encoding B over a window of days.
+    lightgbm_b uses continuous encoding B over a window of days, and knn_b3 /
+    knn_b5 compare 3- and 5-day windows of continuous encoding B.
     """
     seed = load_config()["seed"]
     a_cols = [pattern_column(p) for p in PATTERNS]
@@ -69,6 +71,9 @@ def experiments() -> dict:
                           "make": lambda fold: LightGBMModel(seed=seed + fold.test_year)}
     spec["lightgbm_b"] = {"feature_sets": ["encoding_b_window"], "features": b_cols,
                           "make": lambda fold: LightGBMModel(seed=seed + fold.test_year)}
+    for days in load_config()["models"]["knn"]["windows"]:
+        spec[f"knn_b{days}"] = {"feature_sets": ["encoding_b_window"], "features": window_columns(days),
+                                "make": lambda fold: KNNModel()}
     return spec
 
 

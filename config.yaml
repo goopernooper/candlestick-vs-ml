@@ -86,3 +86,12 @@ models:
     colsample_bytree: 0.8
     reg_lambda: 1.0
     n_jobs: 4                # fixed thread count: LightGBM is only exactly reproducible with the same count
+  knn:
+    # k-nearest neighbours: for each test day, find the k most similar candle
+    # windows in the training data (all stocks pooled) and predict the share of
+    # them that were followed by an up day. Similarity is Euclidean distance on
+    # continuous encoding B, after standardizing each column using the training
+    # days only. Fixed settings for now; tuned in week 6 like every other model.
+    windows: [3, 5]   # days of candles compared (one model per window)
+    k: 100
+    n_jobs: 4
