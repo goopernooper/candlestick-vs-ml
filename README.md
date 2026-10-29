@@ -1,3 +1,5 @@
 # candlestick-vs-ml
 Comparing candlestick pattern mining with machine learning for next-day stock direction prediction.
 This repository compares candlestick pattern–based models (a variable-order pattern miner and k-nearest neighbors) against standard machine learning algorithms for predicting next-day direction on about 25 US large-cap stocks, 2002–2025. All models share the same encodings and are evaluated with walk-forward validation, naive baselines, and transaction costs. Undergraduate research at Queensborough Community College, advised by Professor Yusuf Danisman.
+# Stock universe 
+For each of the 11 GICS sectors, select the two largest current S&P 500 companies by market capitalization that have daily price data on January 2, 2002. The next two eligible companies in each sector are recorded as alternates; if a selected stock fails the data validation checks, it is replaced by the first alternate in its sector. SPY is included as the market proxy. Because selection uses present-day index members, the universe is subject to survivorship bias.
