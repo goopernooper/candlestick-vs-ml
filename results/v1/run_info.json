@@ -1,0 +1,181 @@
+{
+  "git_commit": "7d42b28+dirty",
+  "run_at": "2026-10-29T21:09:07+00:00",
+  "folds": [
+    2005,
+    2006,
+    2007,
+    2008,
+    2009,
+    2010,
+    2011,
+    2012,
+    2013,
+    2014,
+    2015,
+    2016,
+    2017,
+    2018,
+    2019,
+    2020,
+    2021,
+    2022
+  ],
+  "models": {
+    "majority": [
+      "n_close"
+    ],
+    "always_long": [
+      "n_close"
+    ],
+    "previous_day": [
+      "n_close"
+    ],
+    "random": [
+      "n_close"
+    ],
+    "lightgbm_a": [
+      "a_2crows",
+      "a_3blackcrows",
+      "a_3inside",
+      "a_3linestrike",
+      "a_3outside",
+      "a_3starsinsouth",
+      "a_3whitesoldiers",
+      "a_abandonedbaby",
+      "a_advanceblock",
+      "a_belthold",
+      "a_breakaway",
+      "a_closingmarubozu",
+      "a_concealbabyswall",
+      "a_counterattack",
+      "a_darkcloudcover",
+      "a_doji",
+      "a_dojistar",
+      "a_dragonflydoji",
+      "a_engulfing",
+      "a_eveningdojistar",
+      "a_eveningstar",
+      "a_gapsidesidewhite",
+      "a_gravestonedoji",
+      "a_hammer",
+      "a_hangingman",
+      "a_harami",
+      "a_haramicross",
+      "a_highwave",
+      "a_hikkake",
+      "a_hikkakemod",
+      "a_homingpigeon",
+      "a_identical3crows",
+      "a_inneck",
+      "a_invertedhammer",
+      "a_kicking",
+      "a_kickingbylength",
+      "a_ladderbottom",
+      "a_longleggeddoji",
+      "a_longline",
+      "a_marubozu",
+      "a_matchinglow",
+      "a_mathold",
+      "a_morningdojistar",
+      "a_morningstar",
+      "a_onneck",
+      "a_piercing",
+      "a_rickshawman",
+      "a_risefall3methods",
+      "a_separatinglines",
+      "a_shootingstar",
+      "a_shortline",
+      "a_spinningtop",
+      "a_stalledpattern",
+      "a_sticksandwich",
+      "a_takuri",
+      "a_tasukigap",
+      "a_thrusting",
+      "a_tristar",
+      "a_unique3river",
+      "a_upsidegap2crows",
+      "a_xsidegap3methods"
+    ],
+    "lightgbm_b": [
+      "b_body",
+      "b_upper",
+      "b_lower",
+      "b_gap",
+      "b_body_lag1",
+      "b_upper_lag1",
+      "b_lower_lag1",
+      "b_gap_lag1",
+      "b_body_lag2",
+      "b_upper_lag2",
+      "b_lower_lag2",
+      "b_gap_lag2"
+    ]
+  },
+  "stocks": 22,
+  "test_days": 99660,
+  "first_date": "2002-01-02",
+  "last_date": "2022-12-29",
+  "config": {
+    "encoding_b": {
+      "body_edges": [
+        -0.6,
+        -0.1,
+        0.1,
+        0.6
+      ],
+      "wick_edge": 0.25,
+      "window_days": 3,
+      "checked_on": {
+        "start": "2002-01-02",
+        "end": "2004-12-31"
+      }
+    },
+    "labels": {
+      "horizon": 1,
+      "dead_zone_k": 0.1,
+      "vol_window": 20
+    },
+    "splits": {
+      "train_start": "2002-01-02",
+      "first_test_year": 2005,
+      "last_test_year": 2022,
+      "holdout_years": [
+        2023,
+        2025
+      ],
+      "unlock_holdout": false,
+      "tuning_years": 1
+    },
+    "seed": 20261016,
+    "backtest": {
+      "strategies": [
+        "long_short",
+        "long_flat"
+      ],
+      "cost_bps_per_side": 5,
+      "cost_grid_bps": [
+        0,
+        1,
+        2,
+        5,
+        10,
+        20
+      ],
+      "trading_days_per_year": 252
+    },
+    "models": {
+      "lightgbm": {
+        "n_estimators": 200,
+        "learning_rate": 0.05,
+        "num_leaves": 15,
+        "min_child_samples": 500,
+        "subsample": 0.8,
+        "subsample_freq": 1,
+        "colsample_bytree": 0.8,
+        "reg_lambda": 1.0,
+        "n_jobs": 4
+      }
+    }
+  }
+}
