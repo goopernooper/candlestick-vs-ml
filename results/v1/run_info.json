@@ -1,6 +1,6 @@
 {
-  "git_commit": "8706c4d",
-  "run_at": "2026-10-29T21:13:40+00:00",
+  "git_commit": "ec087ee",
+  "run_at": "2026-10-29T21:39:56+00:00",
   "folds": [
     2005,
     2006,
@@ -110,6 +110,42 @@
       "b_upper_lag2",
       "b_lower_lag2",
       "b_gap_lag2"
+    ],
+    "knn_b3": [
+      "b_body",
+      "b_upper",
+      "b_lower",
+      "b_gap",
+      "b_body_lag1",
+      "b_upper_lag1",
+      "b_lower_lag1",
+      "b_gap_lag1",
+      "b_body_lag2",
+      "b_upper_lag2",
+      "b_lower_lag2",
+      "b_gap_lag2"
+    ],
+    "knn_b5": [
+      "b_body",
+      "b_upper",
+      "b_lower",
+      "b_gap",
+      "b_body_lag1",
+      "b_upper_lag1",
+      "b_lower_lag1",
+      "b_gap_lag1",
+      "b_body_lag2",
+      "b_upper_lag2",
+      "b_lower_lag2",
+      "b_gap_lag2",
+      "b_body_lag3",
+      "b_upper_lag3",
+      "b_lower_lag3",
+      "b_gap_lag3",
+      "b_body_lag4",
+      "b_upper_lag4",
+      "b_lower_lag4",
+      "b_gap_lag4"
     ]
   },
   "stocks": 22,
@@ -174,6 +210,14 @@
         "subsample_freq": 1,
         "colsample_bytree": 0.8,
         "reg_lambda": 1.0,
+        "n_jobs": 4
+      },
+      "knn": {
+        "windows": [
+          3,
+          5
+        ],
+        "k": 100,
         "n_jobs": 4
       }
     }
