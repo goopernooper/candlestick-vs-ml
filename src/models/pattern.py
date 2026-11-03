@@ -7,8 +7,10 @@ followed by an up day.
 Pattern miner (week 5): count_contexts() tallies, for every sequence of 1 to 3
 consecutive daily symbols, how often it was followed by an up day, and
 shrink() turns those counts into probabilities pulled toward the base rate so
-rare contexts can't produce extreme estimates. Prediction with backoff to
-shorter contexts follows in the next task.
+rare contexts can't produce extreme estimates. PatternMiner predicts from the
+longest context seen often enough in training, backing off to shorter contexts
+and finally to the base rate: a variable-order Markov model (Begleiter,
+El-Yaniv & Yona, 2004).
 """
 from __future__ import annotations
 
@@ -132,3 +134,69 @@ def shrink(counts: dict, base_rate: float, m: float | None = None) -> dict:
         raise ValueError("base_rate must be a probability")
     return {length: table.assign(p_up=(table["ups"] + m * base_rate) / (table["n"] + m))
             for length, table in counts.items()}
+
+
+# ---------------------------------------------------------------------------
+# Pattern miner: the model
+# ---------------------------------------------------------------------------
+class PatternMiner(Model):
+    """Variable-order Markov model on daily candle symbols.
+
+    fit: count every context of 1 to max_context symbols in the training days
+    (all stocks pooled), shrink each context's up rate toward the training base
+    rate, and keep the contexts seen at least min_count times.
+
+    predict_proba: for each day, use the longest kept context that ends on that
+    day (3 days, then 2, then 1); if none was kept, use the base rate. explain()
+    reports which context length each prediction came from.
+
+    X must hold b_symbol and its lags (features.symbol_window_columns()).
+    """
+    name = "pattern_miner"
+
+    def __init__(self, max_context: int | None = None, m: float | None = None,
+                 min_count: int | None = None):
+        cfg = load_config()["models"]["pattern_miner"]
+        self.max_context = cfg["max_context"] if max_context is None else max_context
+        self.m = cfg["shrinkage_m"] if m is None else m
+        self.min_count = cfg["min_count"] if min_count is None else min_count
+
+    def fit(self, X, y):
+        y = np.asarray(y, dtype=int)
+        if len(y) == 0:
+            raise ValueError("no training labels")
+        self.base_rate_ = float(y.mean())
+        shrunk = shrink(count_contexts(X, y, self.max_context), self.base_rate_, self.m)
+        # keep only contexts seen often enough to trust
+        self.tables_ = {length: t.loc[t["n"] >= self.min_count, "p_up"]
+                        for length, t in shrunk.items()}
+        return self
+
+    def _lookup(self, X, length) -> np.ndarray:
+        """Each row's estimate for its context of this length, or NaN if the
+        context wasn't kept or the row is missing one of its symbols."""
+        table = self.tables_[length]
+        cols = context_columns(length)
+        keys = X[cols].astype("float")
+        missing = keys.isna().any(axis=1).to_numpy()
+        keys = keys.fillna(-1).astype(int)          # -1 never matches a real symbol
+        if table.empty:
+            return np.full(len(X), np.nan)
+        index = pd.MultiIndex.from_frame(keys) if length > 1 else pd.Index(keys.iloc[:, 0])
+        values = table.reindex(index).to_numpy(dtype=float, copy=True)   # writable copy
+        values[missing] = np.nan
+        return values
+
+    def explain(self, X) -> pd.DataFrame:
+        """p_up and the context length used for each row (0 = base rate)."""
+        p = np.full(len(X), np.nan)
+        used = np.zeros(len(X), dtype=int)
+        for length in range(self.max_context, 0, -1):
+            v = self._lookup(X, length)
+            take = np.isnan(p) & ~np.isnan(v)
+            p[take], used[take] = v[take], length
+        p[np.isnan(p)] = self.base_rate_
+        return pd.DataFrame({"p_up": p, "context_length": used}, index=X.index)
+
+    def predict_proba(self, X):
+        return self.explain(X)["p_up"].to_numpy()

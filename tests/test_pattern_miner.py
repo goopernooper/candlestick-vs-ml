@@ -144,3 +144,88 @@ def test_shrinkage_on_counted_contexts():
     c = shrink(count_contexts(X, y), base_rate=y.mean(), m=4)
     assert c[2].loc[(4, 8), "p_up"] == pytest.approx((2 + 4 * 4 / 6) / (3 + 4))
     assert "p_up" in context_table(c).columns
+
+
+# --------------------------------------------------------- prediction with backoff
+from models.pattern import PatternMiner  # noqa: E402
+
+
+def row(sym, lag1=None, lag2=None):
+    return pd.DataFrame({"b_symbol": pd.array([sym], dtype="Int8"),
+                         "b_symbol_lag1": pd.array([lag1], dtype="Int8"),
+                         "b_symbol_lag2": pd.array([lag2], dtype="Int8")})
+
+
+@pytest.fixture
+def trained():
+    """Training sequence repeating 1, 2, 3 for 300 days (100 of each 3-day context
+    (1,2,3), (2,3,1), (3,1,2)), plus symbol 9 seen just 5 times. min_count 50, m 0
+    so the estimates are raw rates and easy to check by hand."""
+    seq = [1, 2, 3] * 100 + [9] * 5
+    ups = ([1, 0, 1] * 100) + [1] * 5
+    X, y = symbols_frame(seq, ups)
+    return PatternMiner(max_context=3, m=0, min_count=50).fit(X, y), X, y
+
+
+def test_uses_longest_qualifying_context(trained):
+    miner, _, _ = trained
+    e = miner.explain(row(3, 2, 1))                # context (1, 2, 3): seen ~100 times
+    assert e["context_length"].iloc[0] == 3 and e["p_up"].iloc[0] == pytest.approx(1.0)
+
+
+def test_backs_off_when_long_context_is_unseen(trained):
+    miner, _, _ = trained
+    e = miner.explain(row(3, 2, 7))                # (7, 2, 3) never seen; (2, 3) seen ~100 times
+    assert e["context_length"].iloc[0] == 2 and e["p_up"].iloc[0] == pytest.approx(1.0)
+    e = miner.explain(row(3, 7, 7))                # only symbol 3 itself is known
+    assert e["context_length"].iloc[0] == 1
+
+
+def test_backs_off_past_rare_contexts(trained):
+    miner, _, _ = trained
+    e = miner.explain(row(9, 9, 9))                # seen only 5 times, below min_count 50
+    assert e["context_length"].iloc[0] == 0
+    assert e["p_up"].iloc[0] == pytest.approx(miner.base_rate_)
+
+
+def test_missing_lags_use_shorter_contexts(trained):
+    miner, _, _ = trained
+    e = miner.explain(row(3, 2, None))             # two days ago unknown
+    assert e["context_length"].iloc[0] == 2
+    e = miner.explain(row(3, None, None))
+    assert e["context_length"].iloc[0] == 1
+
+
+def test_unknown_symbol_gets_base_rate(trained):
+    miner, _, _ = trained
+    e = miner.explain(row(17, 17, 17))
+    assert e["context_length"].iloc[0] == 0 and e["p_up"].iloc[0] == pytest.approx(miner.base_rate_)
+
+
+def test_predictions_follow_the_shared_interface(trained):
+    miner, X, _ = trained
+    p = miner.predict_proba(X)
+    assert p.shape == (len(X),) and ((p >= 0) & (p <= 1)).all()
+    assert set(miner.predict(X)) <= {0, 1}
+
+
+def test_shrinkage_and_backoff_work_together():
+    """With shrinkage on, a qualifying context's estimate matches shrink() exactly."""
+    rng = np.random.default_rng(3)
+    X, y = symbols_frame(rng.integers(0, 20, 3000), rng.integers(0, 2, 3000))
+    miner = PatternMiner(m=100, min_count=10).fit(X, y)
+    expected = shrink(count_contexts(X, y), y.mean(), 100)
+    e = miner.explain(X)
+    for i in [100, 500, 2000]:
+        L = e["context_length"].iloc[i]
+        key = tuple(int(X.iloc[i][c]) for c in context_columns(L))
+        key = key if L > 1 else key[0]
+        assert e["p_up"].iloc[i] == pytest.approx(expected[L].loc[key, "p_up"])
+
+
+def test_config_defaults():
+    from features import load_config
+    cfg = load_config()["models"]["pattern_miner"]
+    miner = PatternMiner()
+    assert (miner.max_context, miner.m, miner.min_count) == (3, cfg["shrinkage_m"], cfg["min_count"])
+    assert cfg["min_count"] == 30

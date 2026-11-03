@@ -108,3 +108,7 @@ models:
     # its own up rate. A context seen exactly m times lands halfway between.
     # Fixed for now; tuned in week 6 with the same budget as every other model.
     shrinkage_m: 100
+    # Backoff: predict from the longest context (3 days, then 2, then 1) seen at
+    # least min_count times in the training data; if none qualifies, predict the
+    # base rate. Fixed for now; tuned in week 6.
+    min_count: 30
