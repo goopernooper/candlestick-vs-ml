@@ -95,3 +95,9 @@ models:
     windows: [3, 5]   # days of candles compared (one model per window)
     k: 100
     n_jobs: 4
+  pattern_miner:
+    # Variable-order Markov model on symbolic encoding B (week 5). A "context"
+    # is the sequence of the last 1 to max_context daily symbols for one stock,
+    # oldest first. The miner counts, in the training data, how often each
+    # context was followed by an up day.
+    max_context: 3

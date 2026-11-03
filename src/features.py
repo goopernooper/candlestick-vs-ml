@@ -276,6 +276,23 @@ def encoding_b_window(df: pd.DataFrame, days: int | None = None) -> pd.DataFrame
     return pd.concat(parts, axis=1)
 
 
+def encoding_b_symbol_window(df: pd.DataFrame, days: int | None = None) -> pd.DataFrame:
+    """Today's symbol (b_symbol) and the symbols of the previous days
+    (b_symbol_lag1, b_symbol_lag2, ...), for one stock. The pattern miner reads
+    these as contexts. Lags only reach backward and never mix stocks."""
+    days = load_config()["models"]["pattern_miner"]["max_context"] if days is None else days
+    sym = encoding_b_symbolic(df)["b_symbol"]
+    cols = {"b_symbol": sym}
+    for k in range(1, days):
+        cols[f"b_symbol_lag{k}"] = sym.shift(k)
+    return pd.DataFrame(cols, index=df.index)
+
+
+def symbol_window_columns(days: int | None = None) -> list[str]:
+    days = load_config()["models"]["pattern_miner"]["max_context"] if days is None else days
+    return ["b_symbol"] + [f"b_symbol_lag{k}" for k in range(1, days)]
+
+
 def max_window_days() -> int:
     """Longest window any model needs, so one table holds every model's columns."""
     cfg = load_config()
@@ -299,5 +316,6 @@ FEATURE_SETS = {
     # Built with the longest window any model uses; each model selects its own days.
     "encoding_b_window": lambda df: encoding_b_window(df, days=max_window_days()),
     "encoding_b_symbolic": encoding_b_symbolic,
+    "encoding_b_symbol_window": lambda df: encoding_b_symbol_window(df),
     "normalized_ohlc": normalized_ohlc,
 }
