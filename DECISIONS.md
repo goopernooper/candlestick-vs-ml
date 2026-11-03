@@ -23,15 +23,18 @@ Professor Danisman gave full latitude on design, so entries marked "Decided by: 
 | D-006 | Commitment to report a null result | Decided | 2026-09-23 |
 | D-007 | Data source | Decided | 2026-09-23 |
 | D-008 | Venue and deadline | Proposed | |
-| D-009 | Pooled vs. per-ticker training | Proposed | |
-| D-010 | Date range and holdout | Proposed | |
-| D-011 | Ticker universe | Proposed | |
-| D-012 | Headline result | Proposed | |
-| D-013 | Trading rules and costs | Proposed | |
-| D-014 | Regime definition | Proposed | |
+| D-009 | Pooled vs. per-ticker training | Decided | 2026-11-03 |
+| D-010 | Date range and holdout | Decided | 2026-11-03 |
+| D-011 | Ticker universe | Decided | 2026-11-03 |
+| D-012 | Headline result | Decided | 2026-11-03 |
+| D-013 | Trading rules and costs | Decided | 2026-11-03 |
+| D-014 | Regime definition | Decided | 2026-11-03 |
 | D-015 | Preprint and authorship | Proposed | |
 | D-016 | Raw data storage | Decided | 2026-10-07 |
 | D-017 | Review of daily moves over 20% | Decided | 2026-10-07 |
+| D-018 | Model settings for the first end-to-end run | Decided | 2026-10-29 |
+| D-019 | Reversal baseline (post hoc) | Decided | 2026-11-03 |
+| D-020 | Today's-return ablation (post hoc) | Decided | 2026-11-03 |
 
 ---
 
@@ -102,50 +105,50 @@ Fill in **Decided** during the meeting, update the index, and commit.
 - **Proposed:** No default; this is the most important question for the meeting.
 - **Why it matters:** The deadline decides whether week 12 ends in a submission or a polished draft, and how much of the cut list gets used.
 - **Decided:**
-- **Notes:**
+- **Notes:** Still open as of 2026-11-03; depends on the department funding Prof. Danisman offered. If NCUR is the target, its abstract deadline is December 4, 2026.
 
 ### D-009: Pooled vs. per-ticker training
-- **Status:** Proposed.
+- **Status:** Decided, 2026-11-03. Decided by: Joshua (Prof. Danisman gave full latitude on design).
 - **Proposed:** One model per fold trained on all tickers together; per-ticker models as a robustness check.
 - **Why:** Per-ticker models get about 250 samples a year, which starves both the ML models and the pattern miner. ATR normalization makes pooling legitimate, and pooling directly tests the claim that candlestick patterns are universal.
-- **Decided:**
+- **Decided:** Adopted as proposed: one model per fold trained on all 22 stocks pooled; per-stock training is a robustness check. Implemented in src/run.py since week 3.
 - **Notes:**
 
 ### D-010: Date range and holdout
-- **Status:** Proposed.
+- **Status:** Decided, 2026-11-03. Decided by: Joshua (Prof. Danisman gave full latitude on design).
 - **Proposed:** Daily data from January 2002 through December 2025. Development test years 2005–2022. 2023–2025 stays locked as a final holdout until the analysis plan is frozen in week 8.
 - **Why:** Starting in 2002 is after decimalization and puts 2008 in the test set. Ending in 2025 adds the April 2025 selloff as another high-volatility episode. The holdout gives one clean out-of-sample check.
-- **Decided:**
+- **Decided:** Adopted as proposed: 2002-2025, development test years 2005-2022, holdout 2023-2025 locked in code (config.yaml splits.unlock_holdout) until ANALYSIS_PLAN.md is frozen in week 8.
 - **Notes:**
 
 ### D-011: Ticker universe
-- **Status:** Proposed.
+- **Status:** Decided, 2026-11-03. Decided by: Joshua (Prof. Danisman gave full latitude on design).
 - **Proposed:** About 25 large caps, two or three per sector, with continuous data since 2002, plus SPY. The selection rule is written in the README, and survivorship bias is acknowledged as a limitation.
 - **Question for Prof. Danisman:** Does he prefer a universe from prior work, for consistency?
-- **Decided:**
+- **Decided:** Adopted as proposed: 22 stocks by the written rule in the README (two per GICS sector), plus SPY. No universe from prior work was requested. Survivorship bias is acknowledged as a limitation.
 - **Notes:**
 
 ### D-012: Headline result
-- **Status:** Proposed.
+- **Status:** Decided, 2026-11-03. Decided by: Joshua (Prof. Danisman gave full latitude on design).
 - **Proposed:** Lead with the model × encoding grid; regime conditioning is a secondary analysis.
 - **Why:** The grid separates the effect of the encoding from the effect of the model class, which prior work usually mixes together. The high-volatility regime rests on only a handful of episodes, so it is weaker as a headline.
-- **Decided:**
+- **Decided:** Adopted as proposed: the model x encoding grid is the headline; regime conditioning is secondary. Short-term reversal is added as a secondary question (D-019).
 - **Notes:**
 
 ### D-013: Trading rules and costs
-- **Status:** Proposed.
+- **Status:** Decided, 2026-11-03. Decided by: Joshua (Prof. Danisman gave full latitude on design).
 - **Proposed:**
   - Signal at day t's close, trade at that close; next-day open as a robustness check.
   - Long/short is primary; long/flat against buy-and-hold is also reported.
   - Headline tables charge 5 bps per side; the cost curve runs from 0 to 20 bps.
-- **Decided:**
+- **Decided:** Adopted as proposed: trade at day t's close (next-day open as a robustness check); long/short primary, long/flat vs buy-and-hold also reported; 5 bps per side headline, cost grid 0-20 bps. Implemented in config.yaml (backtest).
 - **Notes:**
 
 ### D-014: Regime definition
-- **Status:** Proposed.
+- **Status:** Decided, 2026-11-03. Decided by: Joshua (Prof. Danisman gave full latitude on design).
 - **Proposed:** Terciles of SPY's trailing 21-day realized volatility, with cutoffs computed from past data only. VIX as a robustness check.
 - **Why:** Using past data only means a regime finding is something a trader could have acted on at the time.
-- **Decided:**
+- **Decided:** Adopted as proposed: terciles of SPY's trailing 21-day realized volatility, with cutoffs from data through day t-1 only (expanding window); VIX terciles as a robustness check.
 - **Notes:**
 
 ### D-015: Preprint and authorship
@@ -174,6 +177,27 @@ Fill in **Decided** during the meeting, update the index, and commit.
 
 ---
 
+## Since results v1
+
+### D-018: Model settings for the first end-to-end run
+- **Status:** Decided, 2026-10-29. Decided by: Joshua.
+- **Decision:** Models given continuous encoding B see a 3-day window (today and the two previous candles). k-NN uses 3- and 5-day windows with k = 100, standardized inside each fold. LightGBM uses fixed, conservative settings (config.yaml, models). All of these are replaced by settings tuned inside each training window in week 6, with the same tuning budget for every model family.
+- **Why:** A single candle can't express multi-day shapes, while encoding A's patterns already look back up to five candles. Fixed settings let the whole pipeline run end to end before tuning.
+
+### D-019: Reversal baseline (post hoc)
+- **Status:** Decided, 2026-11-03. Decided by: Joshua (Prof. Danisman gave full latitude on design).
+- **Decision:** Add a `reversal` baseline that predicts the opposite of today's direction, and treat "is any edge more than short-term reversal?" as a secondary question.
+- **Why:** In results v1 the previous-day baseline had MCC -0.0245, negative in 15 of 18 years, so betting against today has MCC +0.0245, above every model so far (LightGBM 0.021-0.022, k-NN 0.014-0.019). LightGBM's predictions agree with reversal far more than chance (61.5% and 59.6% vs about 49% expected). A reviewer would ask whether the candlestick models are just rediscovering reversal; the paper should answer it.
+- **Post hoc:** This baseline was chosen after seeing development results (2005-2022). It is reported as post hoc in the paper. The holdout (2023-2025) has not been seen.
+
+### D-020: Today's-return ablation (post hoc)
+- **Status:** Decided, 2026-11-03. Decided by: Joshua (Prof. Danisman gave full latitude on design).
+- **Decision:** Add LightGBM trained only on today's return in ATR units (`n_close`), alongside the full encodings.
+- **Why:** If the full candle encodings beat it, candle shape adds information beyond today's return; if not, the candlestick models' edge is reversal. Either answer is a clear finding.
+- **Post hoc:** Same as D-019.
+
+---
+
 ## Check-in log
 
 One line per meeting, pointing to the decisions it touched.
@@ -181,6 +205,7 @@ One line per meeting, pointing to the decisions it touched.
 | Date | Summary | Decisions |
 |---|---|---|
 | 2026-09-28 | | D-008 to D-015 |
+| 2026-11-03 | Joshua confirmed D-009 to D-014 and added D-019, D-020 (full design latitude from Prof. Danisman). D-008 and D-015 remain open. | D-009 to D-014, D-019, D-020 |
 
 ---
 

@@ -1,10 +1,10 @@
 # Analysis Plan
 
-**Status: DRAFT** (week 4, 2026-10-29). To be frozen and tagged `analysis-plan-frozen` in week 8, before the 2023–2025 holdout is unlocked.
+**Status: DRAFT** (week 4, 2026-10-29; decisions confirmed 2026-11-03). To be frozen and tagged `analysis-plan-frozen` in week 8, before the 2023–2025 holdout is unlocked.
 
 This document fixes, before the final results are seen, exactly what will be run and how it will be judged. Once frozen, nothing in it changes. Any later deviation is listed in the Deviations section at the end with its date and reason, and is reported in the paper.
 
-Items marked **[confirm]** depend on decisions not yet recorded as Decided in DECISIONS.md, or are proposals for the next check-in.
+Decision numbers (D-xxx) refer to DECISIONS.md. Items added after seeing development results are marked **post hoc**.
 
 ---
 
@@ -12,19 +12,19 @@ Items marked **[confirm]** depend on decisions not yet recorded as Decided in DE
 
 **Primary.** Do candlestick pattern-based models (a variable-order pattern miner and k-nearest neighbours) predict next-day stock direction better than standard machine learning models (random forest, LightGBM, SVM, MLP) and naive baselines, after transaction costs?
 
-**Headline analysis: the model × encoding grid** (D-012 **[confirm]**). Every machine learning model is trained on each encoding, so the effect of the encoding can be separated from the effect of the model class.
+**Headline analysis: the model × encoding grid** (D-012). Every machine learning model is trained on each encoding, so the effect of the encoding can be separated from the effect of the model class.
 
 **Secondary.**
 1. *Fair-features ablation:* does binning candles into symbols or named patterns add anything beyond the same information given as normalized prices?
 2. *Cost sensitivity:* at what transaction cost does any edge disappear?
 3. *Regimes:* does the ranking of models change between low-, medium- and high-volatility periods?
-4. *Reversal:* is any edge more than the known short-term reversal effect? Added after results v1 showed the previous-day baseline with a negative MCC in 15 of 18 years. **[confirm]** This question arose from development results; it is reported as post hoc.
+4. *Reversal:* is any edge more than the known short-term reversal effect? Added after results v1 showed the previous-day baseline with a negative MCC in 15 of 18 years. **Post hoc** (D-019): this question arose from development results and is reported as such.
 
 ---
 
 ## 2. Data (fixed)
 
-- 22 stocks: the two largest current S&P 500 members by market capitalization in each GICS sector with price data on 2002-01-02 (README, D-011 **[confirm]**). SPY is the market proxy; VIX is used only in robustness checks.
+- 22 stocks: the two largest current S&P 500 members by market capitalization in each GICS sector with price data on 2002-01-02 (README, D-011). SPY is the market proxy; VIX is used only in robustness checks.
 - Daily open, high, low and close from Yahoo Finance via yfinance 1.7.0, adjusted for splits and dividends, downloaded 2026-09-28. The exact files are fixed by the hashes in `data/manifest.json`; every run stops if they don't match.
 - Study period: 2002-01-02 to 2025-12-31.
   - Development test years: 2005–2022.
@@ -46,7 +46,7 @@ All computed once, shared by every model, and tested for look-ahead (`tests/test
 | B continuous, 5-day window | as above, for five days (20 columns) | k-NN |
 | B symbolic | 20 symbols per day (5 body levels × long/short upper wick × long/short lower wick) | pattern miner |
 | Normalized OHLC | open, high, low, close minus the previous close, in ATR units (4 columns) | ML models (ablation) |
-| Today's return only | `n_close` (1 column) | LightGBM ablation **[confirm]** |
+| Today's return only | `n_close` (1 column) | LightGBM ablation, **post hoc** (D-020) |
 
 Bin edges for symbolic B are fixed in `config.yaml` (body ±0.1 and ±0.6 ATR, wicks 0.25 ATR) and are not changed after this plan is frozen.
 
@@ -54,7 +54,7 @@ Bin edges for symbolic B are fixed in `config.yaml` (body ±0.1 and ±0.6 ATR, w
 
 **Baselines** (in every table):
 - `majority`, `always_long`, `previous_day`, `random` (seeded per fold)
-- `reversal`: predicts the opposite of today's direction. Added post hoc. **[confirm]**
+- `reversal`: predicts the opposite of today's direction. **Post hoc** (D-019).
 
 **Pattern-based models:**
 - `pattern_miner`: a variable-order Markov model on symbolic B. Contexts of 1–3 symbols; P(up | context) shrunk toward the training base rate; backs off to shorter contexts below a minimum count (Begleiter et al., 2004).
@@ -92,7 +92,7 @@ Models are named `model_encoding` (for example `lightgbm_a`, `svm_ohlc`). All mo
 - annualized return, maximum drawdown, turnover
 - **break-even cost:** the cost per side at which annual long/short return reaches zero
 
-**Cost grid:** 0, 1, 2, 5, 10, 20 bps per side. Headline: 5 bps (D-013 **[confirm]**).
+**Cost grid:** 0, 1, 2, 5, 10, 20 bps per side. Headline: 5 bps (D-013).
 
 ## 8. Statistical tests
 
@@ -118,7 +118,7 @@ A model **beats** a baseline economically if:
 
 Beating buy-and-hold requires the same comparison of long/flat against `always_long` long/flat.
 
-A model **beats the baselines** only if it beats the strongest one: the baseline with the highest pooled MCC (including `reversal`, if confirmed) for classification, and buy-and-hold for the economic claim.
+A model **beats the baselines** only if it beats the strongest one: the baseline with the highest pooled MCC (including `reversal`) for classification, and buy-and-hold for the economic claim.
 
 A model shows **genuine predictive value** if it beats the baselines *and* the strongest baseline is excluded from the 90% Model Confidence Set while the model is in it.
 
@@ -134,7 +134,7 @@ Consistency across years (the number of the 18 folds in which the model beats th
 
 ## 11. Regimes
 
-- **Definition** (D-014 **[confirm]**): SPY's trailing 21-day realized volatility on day *t*, assigned to low / medium / high by terciles. The tercile cutoffs on day *t* use only volatility values through day *t* − 1, on an expanding window starting 2002-01-02.
+- **Definition** (D-014): SPY's trailing 21-day realized volatility on day *t*, assigned to low / medium / high by terciles. The tercile cutoffs on day *t* use only volatility values through day *t* − 1, on an expanding window starting 2002-01-02.
 - **Analysis:** every model is re-evaluated within each regime, with the same metrics and tests.
 - The high-volatility results are also broken down by episode (2008–09, 2011, 2020, 2022), because a few episodes dominate that regime.
 - **Robustness:** VIX terciles in place of SPY volatility.
