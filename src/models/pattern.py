@@ -5,8 +5,10 @@ windows among the training days and predict the share of them that were
 followed by an up day.
 
 Pattern miner (week 5): count_contexts() tallies, for every sequence of 1 to 3
-consecutive daily symbols, how often it was followed by an up day. The model
-built on these counts follows in the next tasks.
+consecutive daily symbols, how often it was followed by an up day, and
+shrink() turns those counts into probabilities pulled toward the base rate so
+rare contexts can't produce extreme estimates. Prediction with backoff to
+shorter contexts follows in the next task.
 """
 from __future__ import annotations
 
@@ -105,5 +107,28 @@ def context_table(counts: dict) -> pd.DataFrame:
                          "context": "  >  ".join(symbol_label(s) for s in key),
                          "symbols": " ".join(str(s) for s in key),
                          "n": int(r["n"]), "ups": int(r["ups"]),
-                         "up_rate": r["ups"] / r["n"]})
+                         "up_rate": r["ups"] / r["n"],
+                         **({"p_up": float(r["p_up"])} if "p_up" in table else {})})
     return pd.DataFrame(rows)
+
+
+# ---------------------------------------------------------------------------
+# Pattern miner: shrinking toward the base rate
+# ---------------------------------------------------------------------------
+def shrink(counts: dict, base_rate: float, m: float | None = None) -> dict:
+    """Add a p_up column to every context table:
+
+        p_up = (ups + m * base_rate) / (n + m)
+
+    base_rate is the training share of up days. The estimate always lies between
+    the context's raw up rate and the base rate; the fewer times a context was
+    seen relative to m, the closer it stays to the base rate. m = 0 gives the
+    raw rate. Returns new tables; the counts passed in are not changed.
+    """
+    m = load_config()["models"]["pattern_miner"]["shrinkage_m"] if m is None else m
+    if m < 0:
+        raise ValueError("m must be zero or positive")
+    if not 0 <= base_rate <= 1:
+        raise ValueError("base_rate must be a probability")
+    return {length: table.assign(p_up=(table["ups"] + m * base_rate) / (table["n"] + m))
+            for length, table in counts.items()}

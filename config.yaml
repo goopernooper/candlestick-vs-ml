@@ -101,3 +101,10 @@ models:
     # oldest first. The miner counts, in the training data, how often each
     # context was followed by an up day.
     max_context: 3
+    # Shrinkage: P(up | context) = (ups + m * base_rate) / (n + m), where
+    # base_rate is the share of up days in the training data. The base rate
+    # counts like m extra past days, so a context seen far fewer than m times
+    # stays near the base rate and one seen far more than m times keeps close to
+    # its own up rate. A context seen exactly m times lands halfway between.
+    # Fixed for now; tuned in week 6 with the same budget as every other model.
+    shrinkage_m: 100

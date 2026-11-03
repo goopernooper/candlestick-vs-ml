@@ -10,7 +10,8 @@ across the 22 stocks. Only training data is used, so nothing here peeks at any
 test year; the shrinkage and minimum-count settings for the next tasks can be
 chosen from it.
 
-Writes results/pattern_context_counts.csv (every context with n, ups, up_rate).
+Writes results/pattern_context_counts.csv: every context with n, ups, its raw
+up_rate, and p_up, the estimate after shrinkage toward the base rate.
 """
 from __future__ import annotations
 
@@ -24,7 +25,8 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import data  # noqa: E402
 from dataset import build_table  # noqa: E402
 from features import symbol_window_columns  # noqa: E402
-from models.pattern import context_table, count_contexts  # noqa: E402
+from features import load_config  # noqa: E402
+from models.pattern import context_table, count_contexts, shrink  # noqa: E402
 from splits import walk_forward  # noqa: E402
 
 OUT = data.ROOT / "results" / "pattern_context_counts.csv"
@@ -37,12 +39,13 @@ def main() -> int:
     train = fold.select(table, "train")
     train = train[train["up"].notna()]
     X, y = train[symbol_window_columns()], train["up"].astype(int)
-    counts = count_contexts(X, y)
+    base = float(y.mean())
+    m = load_config()["models"]["pattern_miner"]["shrinkage_m"]
+    counts = shrink(count_contexts(X, y), base, m)
     t = context_table(counts)
     OUT.parent.mkdir(parents=True, exist_ok=True)
     t.to_csv(OUT, index=False)
 
-    base = y.mean()
     print(f"Training data of the first fold: {fold.train[0].date()} to {fold.train[-1].date()}, "
           f"{len(y):,} labelled stock-days, up share {base:.3f}.\n")
     rows = []
@@ -57,15 +60,17 @@ def main() -> int:
         rows.append(row)
     print(pd.DataFrame(rows).to_string(index=False))
 
-    print("\nRaw up rates swing far more for rare contexts, which is why the next task shrinks them:")
+    print(f"\nRaw up rates swing far more for rare contexts. After shrinkage (m = {m}, toward "
+          f"the base rate {base:.3f}) they stay close to the base rate unless seen often:")
     for length, c in counts.items():
-        rate = c["ups"] / c["n"]
+        raw = c["ups"] / c["n"]
         for lo, hi in [(1, 9), (10, 99), (100, 10**9)]:
-            sel = rate[(c["n"] >= lo) & (c["n"] <= hi)]
-            if len(sel):
+            sel = (c["n"] >= lo) & (c["n"] <= hi)
+            if sel.any():
                 label = f"n {lo}-{hi}" if hi < 10**9 else f"n {lo}+"
-                print(f"  length {length}, {label:<10}: {len(sel):>5} contexts, "
-                      f"up rate ranges {sel.min():.2f} to {sel.max():.2f} (spread {sel.std():.3f})")
+                print(f"  length {length}, {label:<10}: {int(sel.sum()):>5} contexts | raw "
+                      f"{raw[sel].min():.2f} to {raw[sel].max():.2f} | shrunk "
+                      f"{c.loc[sel, 'p_up'].min():.3f} to {c.loc[sel, 'p_up'].max():.3f}")
     print(f"\nWrote {OUT.relative_to(data.ROOT)}")
     return 0
 
