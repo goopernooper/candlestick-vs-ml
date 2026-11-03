@@ -14,7 +14,11 @@ Steps:
   4. Score the predictions (accuracy, balanced accuracy, MCC) and backtest them
      (long/short and long/flat at the headline cost).
   5. Write everything to results/<version>/, stamped with the git commit, and
-     run the sanity checks for the baselines.
+     run the sanity checks for the baselines. Models that describe themselves
+     (the pattern miner reports which context lengths it used) also get a row
+     per fold in diagnostics.csv.
+
+Compare two runs with `python src/compare_runs.py v1 v2`.
 
 Results from uncommitted code are marked "+dirty": commit first if a result
 might go in the paper, so the stamped commit really produced it.
@@ -34,10 +38,11 @@ import pandas as pd
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from dataset import build_table  # noqa: E402
 from evaluate import backtest, summarize  # noqa: E402
-from features import PATTERNS, load_config, pattern_column, window_columns  # noqa: E402
+from features import (PATTERNS, load_config, pattern_column, symbol_window_columns,  # noqa: E402
+                      window_columns)
 from models.baselines import AlwaysLong, Majority, PreviousDay, RandomGuess  # noqa: E402
 from models.ml import LightGBMModel  # noqa: E402
-from models.pattern import KNNModel  # noqa: E402
+from models.pattern import KNNModel, PatternMiner  # noqa: E402
 from splits import walk_forward  # noqa: E402
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -60,7 +65,8 @@ def experiments() -> dict:
 
     Names follow model_encoding: lightgbm_a uses encoding A's 61 pattern columns,
     lightgbm_b uses continuous encoding B over a window of days, and knn_b3 /
-    knn_b5 compare 3- and 5-day windows of continuous encoding B.
+    knn_b5 compare 3- and 5-day windows of continuous encoding B, and
+    pattern_miner reads the last 1-3 daily symbols of symbolic encoding B.
     """
     seed = load_config()["seed"]
     a_cols = [pattern_column(p) for p in PATTERNS]
@@ -74,15 +80,23 @@ def experiments() -> dict:
     for days in load_config()["models"]["knn"]["windows"]:
         spec[f"knn_b{days}"] = {"feature_sets": ["encoding_b_window"], "features": window_columns(days),
                                 "make": lambda fold: KNNModel()}
+    spec["pattern_miner"] = {"feature_sets": ["encoding_b_symbol_window"],
+                             "features": symbol_window_columns(),
+                             "make": lambda fold: PatternMiner()}
     return spec
 
 
-def run_experiments(table: pd.DataFrame, folds, specs: dict, progress=None) -> pd.DataFrame:
+def run_experiments(table: pd.DataFrame, folds, specs: dict, progress=None,
+                    diagnostics: list | None = None) -> pd.DataFrame:
     """The predictions table described in evaluate.py, for every model and fold.
 
     Each model trains only on its own feature columns, on training days with a
     label, and predicts every test day where its features exist. All models must
     end up predicting the same stock-days, so they are compared on equal terms.
+
+    If a list is passed as `diagnostics`, every model with a diagnostics()
+    method adds one dict per fold to it (model, test_year, and what the model
+    reports about itself on that fold's test days).
     """
     out = []
     for fold in folds:
@@ -95,6 +109,9 @@ def run_experiments(table: pd.DataFrame, folds, specs: dict, progress=None) -> p
                 continue
             model = sp["make"](fold).fit(train[cols], train["up"].astype(int))
             p = np.asarray(model.predict_proba(test[cols]), dtype=float)
+            if diagnostics is not None and hasattr(model, "diagnostics"):
+                diagnostics.append({"model": name, "test_year": fold.test_year,
+                                    **model.diagnostics(test[cols])})
             out.append(test[["ticker", "up", "fwd_return"]].assign(
                 model=name, test_year=fold.test_year, p_up=p, pred=(p >= 0.5).astype(int)))
         if progress:
@@ -179,7 +196,8 @@ def main() -> int:
     table = build_table(feature_sets=feature_sets)
     folds = walk_forward(table.index)
     print(f"Running {len(specs)} models on {len(folds)} folds: ", end="", flush=True)
-    preds = run_experiments(table, folds, specs,
+    diag = []
+    preds = run_experiments(table, folds, specs, diagnostics=diag,
                             progress=lambda f: print(f.test_year, end=" ", flush=True))
     print("\n")
 
@@ -192,6 +210,11 @@ def main() -> int:
     summarize(preds, by=["model", "ticker"]).assign(git_commit=stamp).to_csv(out / "metrics_by_stock.csv", index=False)
     backtest(preds, costs_bps=cfg["backtest"]["cost_grid_bps"]).assign(git_commit=stamp).to_csv(out / "backtest.csv", index=False)
     preds.to_parquet(out / "predictions.parquet")
+    written = ["summary.csv", "metrics_by_year.csv", "metrics_by_stock.csv", "backtest.csv",
+               "run_info.json", "predictions.parquet"]
+    if diag:
+        pd.DataFrame(diag).assign(git_commit=stamp).to_csv(out / "diagnostics.csv", index=False)
+        written.append("diagnostics.csv")
     (out / "run_info.json").write_text(json.dumps({
         "git_commit": stamp, "run_at": run_at, "folds": [f.test_year for f in folds],
         "models": {name: sp["features"] for name, sp in specs.items()},
@@ -209,8 +232,14 @@ def main() -> int:
     for name, passed in baseline_checks(summary):
         print(f"  {'PASS' if passed else 'FAIL'}  {name}")
         ok &= passed
-    print(f"\nWrote results/{args.version}/: summary.csv, metrics_by_year.csv, metrics_by_stock.csv, "
-          "backtest.csv, run_info.json, predictions.parquet")
+    if diag:
+        d = pd.DataFrame(diag)
+        for name, g in d.groupby("model"):
+            used = g.filter(like="used_len").mean()
+            print(f"  {name}: share of test predictions by context length, averaged over folds: "
+                  + ", ".join(f"{c.removeprefix('used_len')}d {v:.0%}" for c, v in used.items())
+                  + "  (0d = base rate)")
+    print(f"\nWrote results/{args.version}/: {', '.join(written)}")
     return 0 if ok else 1
 
 

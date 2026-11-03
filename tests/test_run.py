@@ -73,3 +73,63 @@ def test_summary_and_baseline_checks(preds):
     assert {"ls_sharpe", "lf_sharpe", "mcc"} <= set(s.columns)
     checks = baseline_checks(s)
     assert len(checks) == 3 and all(passed for _, passed in checks)
+
+
+# ------------------------------------------------------- pattern miner in the runner
+from features import symbol_window_columns  # noqa: E402
+from run import experiments, run_experiments  # noqa: E402
+
+
+def test_pattern_miner_is_registered():
+    spec = experiments()["pattern_miner"]
+    assert spec["feature_sets"] == ["encoding_b_symbol_window"]
+    assert spec["features"] == symbol_window_columns()
+    assert spec["make"](None).name == "pattern_miner"
+
+
+@pytest.fixture(scope="module")
+def miner_run():
+    table = build_table(STOCKS, feature_sets=["normalized_ohlc", "encoding_b_symbol_window"],
+                        loader=fake_loader)
+    specs = {name: experiments()[name] for name in ["always_long", "pattern_miner"]}
+    diag = []
+    preds = run_experiments(table, walk_forward(table.index), specs, diagnostics=diag)
+    return table, preds, pd.DataFrame(diag)
+
+
+def test_pattern_miner_predicts_the_same_days_as_the_baselines(miner_run):
+    table, preds, _ = miner_run
+    n = preds.groupby("model").size()
+    assert n["pattern_miner"] == n["always_long"] == (table.index >= "2005-01-01").sum()
+    p = preds.loc[preds["model"] == "pattern_miner", "p_up"]
+    assert p.between(0, 1).all() and p.nunique() > 1
+
+
+def test_pattern_miner_diagnostics(miner_run):
+    _, _, diag = miner_run
+    assert set(diag["model"]) == {"pattern_miner"}               # baselines have no diagnostics
+    assert sorted(diag["test_year"]) == list(range(2005, 2023))   # one row per fold
+    used = diag[["used_len3", "used_len2", "used_len1", "used_len0"]]
+    assert np.allclose(used.sum(axis=1), 1)
+    assert (diag["kept_len1"] <= 20).all() and diag["base_rate"].between(0, 1).all()
+    # more training data -> more long contexts qualify
+    assert diag["kept_len3"].iloc[-1] >= diag["kept_len3"].iloc[0]
+
+
+# ------------------------------------------------------------------ comparing runs
+from compare_runs import compare  # noqa: E402
+
+
+def test_compare_runs_statuses():
+    cols = ["days", "accuracy", "balanced_accuracy", "mcc", "ls_ann_return", "ls_sharpe",
+            "lf_ann_return", "lf_sharpe"]
+    old = pd.DataFrame([[100, .5, .5, 0.0, .01, .1, .02, .2],
+                        [100, .52, .51, .02, .03, .3, .04, .4],
+                        [100, .5, .5, 0.0, 0, 0, 0, 0]],
+                       index=["always_long", "lightgbm_b", "gone"], columns=cols)
+    new = old.drop(index="gone").copy()
+    new.loc["lightgbm_b", "mcc"] = 0.021
+    new.loc["pattern_miner"] = [100, .51, .5, .01, .01, .1, .01, .1]
+    status = compare(old, new).set_index("model")["status"]
+    assert status.to_dict() == {"always_long": "same", "lightgbm_b": "CHANGED",
+                                "gone": "dropped", "pattern_miner": "new"}

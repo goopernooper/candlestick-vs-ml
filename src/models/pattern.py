@@ -200,3 +200,16 @@ class PatternMiner(Model):
 
     def predict_proba(self, X):
         return self.explain(X)["p_up"].to_numpy()
+
+    def diagnostics(self, X) -> dict:
+        """What the fitted model looks like and how it predicted X, for the
+        results files: the training base rate, how many contexts of each length
+        were kept, and the share of X's predictions that used each length
+        (0 = base rate)."""
+        used = self.explain(X)["context_length"]
+        out = {"base_rate": self.base_rate_}
+        for length in range(self.max_context, 0, -1):
+            out[f"kept_len{length}"] = len(self.tables_[length])
+        for length in range(self.max_context, -1, -1):
+            out[f"used_len{length}"] = float((used == length).mean())
+        return out

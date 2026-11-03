@@ -35,6 +35,7 @@ Professor Danisman gave full latitude on design, so entries marked "Decided by: 
 | D-018 | Model settings for the first end-to-end run | Decided | 2026-10-29 |
 | D-019 | Reversal baseline (post hoc) | Decided | 2026-11-03 |
 | D-020 | Today's-return ablation (post hoc) | Decided | 2026-11-03 |
+| D-021 | Pattern miner settings for results v2 | Decided | 2026-11-03 |
 
 ---
 
@@ -195,6 +196,12 @@ Fill in **Decided** during the meeting, update the index, and commit.
 - **Decision:** Add LightGBM trained only on today's return in ATR units (`n_close`), alongside the full encodings.
 - **Why:** If the full candle encodings beat it, candle shape adds information beyond today's return; if not, the candlestick models' edge is reversal. Either answer is a clear finding.
 - **Post hoc:** Same as D-019.
+
+### D-021: Pattern miner settings for results v2
+- **Status:** Decided, 2026-11-03. Decided by: Joshua.
+- **Decision:** The pattern miner uses contexts of 1 to 3 daily symbols (symbolic encoding B), shrinks each context's up rate toward the training base rate with m = 100, and predicts from the longest context seen at least 30 times in training, backing off to shorter contexts and then to the base rate (config.yaml, models: pattern_miner). As with D-018, m and min_count are replaced by settings tuned inside each training window in week 6.
+- **Why:** In the first training window (2002–2004) the median 3-day context occurs about twice, so raw up rates are mostly noise. On synthetic noise sized like that window, the miner without shrinkage or a minimum count scored about 76% on its training data and 50% on new data; with these settings the gap was under 6 points. On synthetic data with a planted 3-day pattern (up 70% of the time, about 1% of days), the miner with these settings kept the pattern and ranked it in the top 5 of about 400 contexts in all 20 samples tried (tests/test_pattern_miner_synthetic.py).
+- **Consequences:** results/<version>/diagnostics.csv records, for each fold, how many contexts of each length were kept and which context length each test prediction used.
 
 ---
 
