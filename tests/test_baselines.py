@@ -1,4 +1,4 @@
-"""Tests for the four baselines, including an end-to-end check on one walk-forward fold."""
+"""Tests for the baselines, including an end-to-end check on one walk-forward fold."""
 import sys
 from pathlib import Path
 
@@ -10,14 +10,23 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 from features import normalized_ohlc  # noqa: E402
 from labels import make_labels  # noqa: E402
 from models.baselines import (BASELINES, AlwaysLong, Majority, PreviousDay,  # noqa: E402
-                              RandomGuess)
+                              RandomGuess, Reversal)
 from splits import walk_forward  # noqa: E402
 
 X = pd.DataFrame({"n_close": [0.8, -0.3, 0.0, 1.2, -2.0]})
 
 
-def test_all_four_registered():
-    assert set(BASELINES) == {"majority", "always_long", "previous_day", "random"}
+def test_all_registered():
+    assert set(BASELINES) == {"majority", "always_long", "previous_day", "random", "reversal"}
+
+
+def test_reversal_bets_against_today():
+    # n_close: up, down, flat, up, down
+    assert Reversal().predict_proba(X).tolist() == [0.0, 1.0, 0.5, 0.0, 1.0]
+    assert Reversal().predict(X).tolist() == [0, 1, 1, 0, 1]      # flat counts as up, as for previous_day
+    prev, rev = PreviousDay().predict(X), Reversal().predict(X)
+    flat = X["n_close"].to_numpy() == 0
+    assert (prev[~flat] != rev[~flat]).all()
 
 
 @pytest.mark.parametrize("name", sorted(BASELINES))
@@ -87,3 +96,5 @@ def test_end_to_end_on_one_fold():
     assert acc["always_long"] == pytest.approx(y_test.mean())
     assert abs(acc["random"] - 0.5) < 0.04
     assert 0.4 < acc["previous_day"] < 0.6
+    flat = (test["n_close"] == 0).to_numpy()
+    assert acc["reversal"] == pytest.approx(1 - acc["previous_day"], abs=flat.mean() + 1e-12)

@@ -34,7 +34,7 @@ We report accuracy, balanced accuracy and the Matthews correlation coefficient (
 
 ### 6.2 Baselines
 
-Every results table includes four simple baselines. The *majority* baseline predicts whichever direction was more common in the training window. The *always-long* baseline always predicts an up day; its accuracy equals the share of up days in the test period, and its MCC is zero. The *previous-day* baseline predicts that each stock moves the same direction tomorrow as it did today. The *random* baseline draws its probability uniformly from [0, 1], with a fixed seed that differs by fold. A model that does not outperform these baselines, and in particular always-long, has not demonstrated predictive value.
+Every results table includes five simple baselines. The *majority* baseline predicts whichever direction was more common in the training window. The *always-long* baseline always predicts an up day; its accuracy equals the share of up days in the test period, and its MCC is zero. The *previous-day* baseline predicts that each stock moves the same direction tomorrow as it did today. The *random* baseline draws its probability uniformly from [0, 1], with a fixed seed that differs by fold. The *reversal* baseline makes the opposite prediction to the previous-day baseline: each stock is expected to reverse today's move. Short-term reversal is a well-documented effect in stock returns (Jegadeesh, 1990; Lehmann, 1990), and a candlestick model that merely rediscovered it would add nothing new. We added this baseline after development results showed the previous-day baseline below chance in most years, and we report it as a post hoc addition. A model that does not outperform these baselines, and in particular always-long and reversal, has not demonstrated predictive value.
 
 ### 6.3 Trading backtest
 
@@ -49,6 +49,8 @@ Trading at a closing price that has just been observed is an optimistic assumpti
 ### References for these sections
 
 - Chicco, D., & Jurman, G. (2020). The advantages of the Matthews correlation coefficient (MCC) over F1 score and accuracy in binary classification evaluation. *BMC Genomics*, 21, 6.
+- Jegadeesh, N. (1990). Evidence of predictable behavior of security returns. *Journal of Finance*, 45(3), 881–898.
+- Lehmann, B. N. (1990). Fads, martingales, and market efficiency. *Quarterly Journal of Economics*, 105(1), 1–28.
 - López de Prado, M. (2018). *Advances in Financial Machine Learning*. Wiley.
 - Matthews, B. W. (1975). Comparison of the predicted and observed secondary structure of T4 phage lysozyme. *Biochimica et Biophysica Acta – Protein Structure*, 405(2), 442–451.
 - Sharpe, W. F. (1966). Mutual fund performance. *Journal of Business*, 39(1), 119–138.

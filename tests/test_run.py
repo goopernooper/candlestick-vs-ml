@@ -68,11 +68,11 @@ def test_random_seed_differs_by_fold(preds):
 
 def test_summary_and_baseline_checks(preds):
     s = summary_table(preds, cost_bps=5, stamp="abc1234", run_at="now")
-    assert set(s["model"]) == {"majority", "always_long", "previous_day", "random"}
+    assert set(s["model"]) == {"majority", "always_long", "previous_day", "random", "reversal"}
     assert (s["git_commit"] == "abc1234").all()
     assert {"ls_sharpe", "lf_sharpe", "mcc"} <= set(s.columns)
     checks = baseline_checks(s)
-    assert len(checks) == 3 and all(passed for _, passed in checks)
+    assert len(checks) == 4 and all(passed for _, passed in checks)
 
 
 # ------------------------------------------------------- pattern miner in the runner
@@ -133,3 +133,59 @@ def test_compare_runs_statuses():
     status = compare(old, new).set_index("model")["status"]
     assert status.to_dict() == {"always_long": "same", "lightgbm_b": "CHANGED",
                                 "gone": "dropped", "pattern_miner": "new"}
+
+
+# --------------------------------------------------------- the full grid (week 6)
+from features import PATTERNS, load_config, pattern_column, window_columns  # noqa: E402
+from models.ml import LightGBMModel, MLPModel, RandomForestModel, SVMModel  # noqa: E402
+
+
+def test_full_grid_is_registered():
+    spec = experiments()
+    grid = [f"{m}_{e}" for m in ["lightgbm", "rf", "svm", "mlp"] for e in ["a", "b", "ohlc"]]
+    expected = ["majority", "always_long", "previous_day", "random", "reversal", *grid,
+                "lightgbm_today", "knn_b3", "knn_b5", "pattern_miner"]
+    assert list(spec) == expected
+    cols = {"a": [pattern_column(p) for p in PATTERNS], "b": window_columns(),
+            "ohlc": ["n_open", "n_high", "n_low", "n_close"]}
+    sets = {"a": "encoding_a", "b": "encoding_b_window", "ohlc": "normalized_ohlc"}
+    classes = {"lightgbm": LightGBMModel, "rf": RandomForestModel, "svm": SVMModel, "mlp": MLPModel}
+    families = {"lightgbm": "lightgbm", "rf": "random_forest", "svm": "svm", "mlp": "mlp"}
+    for name in grid:
+        m, e = name.split("_", 1)
+        sp = spec[name]
+        assert sp["features"] == cols[e] and sp["feature_sets"] == [sets[e]], name
+        assert sp["tune"] == families[m], name
+        model = sp["make"](walk_forward(CAL)[0])
+        assert isinstance(model, classes[m]) and model.seed == load_config()["seed"] + 2005, name
+    today = spec["lightgbm_today"]
+    assert today["features"] == ["n_close"] and today["tune"] == "lightgbm"
+    assert isinstance(today["make"](walk_forward(CAL)[0]), LightGBMModel)
+    assert all("tune" not in spec[b] for b in expected[:5])        # baselines have nothing to tune
+
+
+def test_grid_keeps_earlier_models_unchanged():
+    """lightgbm_a/b are built exactly as in results v1/v2, so an untuned rerun reproduces them."""
+    spec = experiments()
+    fold = walk_forward(CAL)[3]
+    for name in ["lightgbm_a", "lightgbm_b"]:
+        m = spec[name]["make"](fold)
+        assert m.params == load_config()["models"]["lightgbm"] and m.seed == load_config()["seed"] + fold.test_year
+
+
+# ------------------------------------------------------------------- timing
+from time_models import estimate, line_through, time_fold  # noqa: E402
+
+
+def test_timing_estimate():
+    at = line_through(1000, 2.0, 5000, 10.0)                       # 2 ms per training day
+    assert at(3000) == pytest.approx(6.0) and at(0) == 0.0
+    run, tuning = estimate(at, {2005: 1000, 2006: 2000}, {2005: 500, 2010: 1500}, n_trials=20)
+    assert run == pytest.approx(2.0 + 4.0)
+    assert tuning == pytest.approx(20 * (1.0 + 3.0))
+    assert estimate(at, {2005: 1000}, {2005: 500}, n_trials=0)[1] == 0
+
+
+def test_time_fold_runs(table):
+    seconds, rows = time_fold(table, walk_forward(table.index)[0], experiments()["previous_day"])
+    assert seconds >= 0 and rows > 0

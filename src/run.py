@@ -44,8 +44,8 @@ from dataset import build_table  # noqa: E402
 from evaluate import backtest, summarize  # noqa: E402
 from features import (PATTERNS, load_config, pattern_column, symbol_window_columns,  # noqa: E402
                       window_columns)
-from models.baselines import AlwaysLong, Majority, PreviousDay, RandomGuess  # noqa: E402
-from models.ml import LightGBMModel  # noqa: E402
+from models.baselines import AlwaysLong, Majority, PreviousDay, RandomGuess, Reversal  # noqa: E402
+from models.ml import LightGBMModel, MLPModel, RandomForestModel, SVMModel  # noqa: E402
 from models.pattern import KNNModel, PatternMiner  # noqa: E402
 from splits import walk_forward  # noqa: E402
 from tune import settings_table, tuned_settings, with_settings  # noqa: E402
@@ -62,31 +62,57 @@ def baseline_models() -> dict:
         "always_long": lambda fold: AlwaysLong(),
         "previous_day": lambda fold: PreviousDay(),
         "random": lambda fold: RandomGuess(seed=seed + fold.test_year),
+        "reversal": lambda fold: Reversal(),
+    }
+
+
+# The model x encoding grid (ANALYSIS_PLAN.md, D-012): every machine learning
+# model on every encoding. name prefix -> (model class, search space in config.yaml)
+ML_MODELS = {
+    "lightgbm": (LightGBMModel, "lightgbm"),
+    "rf": (RandomForestModel, "random_forest"),
+    "svm": (SVMModel, "svm"),
+    "mlp": (MLPModel, "mlp"),
+}
+OHLC_COLUMNS = ["n_open", "n_high", "n_low", "n_close"]
+
+
+def encodings() -> dict:
+    """name suffix -> (feature set to build, columns): the three encodings in the grid."""
+    return {
+        "a": ("encoding_a", [pattern_column(p) for p in PATTERNS]),     # 61 TA-Lib patterns, day t
+        "b": ("encoding_b_window", window_columns()),                   # candle shape, days t-2..t
+        "ohlc": ("normalized_ohlc", OHLC_COLUMNS),                     # same information as B, day t
     }
 
 
 def experiments() -> dict:
     """Every model the runner knows: name -> (feature sets to build, columns, model maker).
 
-    Names follow model_encoding: lightgbm_a uses encoding A's 61 pattern columns,
-    lightgbm_b uses continuous encoding B over a window of days, and knn_b3 /
-    knn_b5 compare 3- and 5-day windows of continuous encoding B, and
-    pattern_miner reads the last 1-3 daily symbols of symbolic encoding B.
+    Names follow model_encoding:
+      baselines        majority, always_long, previous_day, random, reversal
+      the grid         {lightgbm, rf, svm, mlp} x {a, b, ohlc}: encoding A's 61
+                       pattern columns, continuous encoding B over a 3-day
+                       window, or normalized prices for day t (12 models)
+      lightgbm_today   LightGBM on today's return in ATRs (n_close) only: the
+                       post hoc ablation of D-020
+      knn_b3, knn_b5   k-NN on 3- and 5-day windows of continuous encoding B
+      pattern_miner    the last 1-3 daily symbols of symbolic encoding B
 
     A spec with "tune" names its search space in config.yaml (tuning.spaces);
     its make(fold, **settings) accepts tuned settings, and without any it uses
     the settings in config.yaml (models).
     """
     seed = load_config()["seed"]
-    a_cols = [pattern_column(p) for p in PATTERNS]
-    b_cols = window_columns()
     spec = {name: {"feature_sets": ["normalized_ohlc"], "features": ["n_close"], "make": make}
             for name, make in baseline_models().items()}
-    lightgbm = lambda fold, **p: LightGBMModel(seed=seed + fold.test_year, **p)  # noqa: E731
-    spec["lightgbm_a"] = {"feature_sets": ["encoding_a"], "features": a_cols,
-                          "make": lightgbm, "tune": "lightgbm"}
-    spec["lightgbm_b"] = {"feature_sets": ["encoding_b_window"], "features": b_cols,
-                          "make": lightgbm, "tune": "lightgbm"}
+    for prefix, (cls, family) in ML_MODELS.items():
+        make = lambda fold, cls=cls, **p: cls(seed=seed + fold.test_year, **p)  # noqa: E731
+        for suffix, (feature_set, cols) in encodings().items():
+            spec[f"{prefix}_{suffix}"] = {"feature_sets": [feature_set], "features": cols,
+                                          "make": make, "tune": family}
+    spec["lightgbm_today"] = {"feature_sets": ["normalized_ohlc"], "features": ["n_close"],
+                              "make": spec["lightgbm_a"]["make"], "tune": "lightgbm"}
     for days in load_config()["models"]["knn"]["windows"]:
         spec[f"knn_b{days}"] = {"feature_sets": ["encoding_b_window"], "features": window_columns(days),
                                 "make": lambda fold, **p: KNNModel(**p), "tune": "knn"}
@@ -177,6 +203,10 @@ def baseline_checks(summary: pd.DataFrame) -> list[tuple[str, bool]]:
     if "random" in s.index:
         checks.append(("random accuracy is within 1.5 points of 50%",
                        abs(s.loc["random", "accuracy"] - 0.5) < 0.015))
+    if {"reversal", "previous_day"} <= set(s.index):
+        # opposite predictions except on the rare exactly flat days
+        checks.append(("reversal MCC is minus previous_day MCC (within 0.002)",
+                       abs(s.loc["reversal", "mcc"] + s.loc["previous_day", "mcc"]) < 0.002))
     return checks
 
 

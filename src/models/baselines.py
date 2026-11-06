@@ -1,4 +1,4 @@
-"""The four naive baselines every model has to beat.
+"""The naive baselines every model has to beat.
 
 All models in this project share one interface:
 
@@ -17,8 +17,13 @@ The baselines:
                  normalized_ohlc): up if n_close > 0, down if below 0, 0.5 if flat
   random         a coin flip: probability drawn uniformly from [0, 1] with a fixed
                  seed, so it is right about half the time and reproducible
+  reversal       the opposite of previous_day: predicts that tomorrow reverses
+                 today's move (down after an up day, up after a down day, 0.5 if
+                 flat). Added post hoc (DECISIONS.md D-019) after results v1 showed
+                 previous_day with a negative MCC in 15 of 18 years: short-term
+                 reversal is the simple effect any candlestick model must beat.
 
-None of them can see the future: previous_day uses only today's candle, and the
+None of them can see the future: previous_day and reversal use only today's candle, and the
 others use nothing from the test days at all.
 """
 from __future__ import annotations
@@ -79,6 +84,13 @@ class PreviousDay(Model):
         return np.select([today > 0, today < 0], [1.0, 0.0], 0.5)
 
 
+class Reversal(PreviousDay):
+    name = "reversal"
+
+    def predict_proba(self, X):
+        return 1.0 - super().predict_proba(X)      # a flat day stays at 0.5
+
+
 class RandomGuess(Model):
     name = "random"
 
@@ -95,4 +107,4 @@ class RandomGuess(Model):
         return self.rng_.uniform(0, 1, len(X))
 
 
-BASELINES = {cls.name: cls for cls in [Majority, AlwaysLong, PreviousDay, RandomGuess]}
+BASELINES = {cls.name: cls for cls in [Majority, AlwaysLong, PreviousDay, RandomGuess, Reversal]}
