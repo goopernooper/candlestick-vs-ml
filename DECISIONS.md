@@ -37,6 +37,7 @@ Professor Danisman gave full latitude on design, so entries marked "Decided by: 
 | D-020 | Today's-return ablation (post hoc) | Decided | 2026-11-03 |
 | D-021 | Pattern miner settings for results v2 | Decided | 2026-11-03 |
 | D-022 | Random forest, SVM and MLP: first settings and the SVM training cap | Decided | 2026-11-06 |
+| D-023 | Tuning protocol details | Decided | 2026-11-06 |
 
 ---
 
@@ -213,6 +214,19 @@ Fill in **Decided** during the meeting, update the index, and commit.
   - The SVM's confidence score is the logistic function of its decision function. It is above 0.5 exactly when the SVM predicts up and orders days by distance from the decision boundary, but it is not a calibrated probability.
 - **Why:** On data this noisy, nearly every training day becomes a support vector (about 97% in timing runs on synthetic prices sized like the real data), and SVM training time grows roughly with the square of the number of rows. Timed on 2 CPU cores: 20,000 rows take 10–30 seconds per fit depending on the encoding, while a full 100,000-row window would take an estimated 10 minutes per fit, too slow for 18 folds, three encodings and the tuning budget. Sampling from the whole window keeps the variety of market conditions the other models see. SVC's built-in probabilities (`probability=True`) would fit five extra models per fit and can disagree with the SVM's own predictions; no analysis needs calibrated probabilities, since classification uses the 0.5 cut and the coverage analysis only ranks days by confidence.
 - **Consequences:** The paper reports the cap as a limitation of the SVM comparison: the SVM sees at most 20,000 of the up to about 100,000 training days. The number of rows and support vectors in each SVM fit is recorded in results/<version>/diagnostics.csv, as are the MLP's epochs and whether it converged.
+
+### D-023: Tuning protocol details
+- **Status:** Decided, 2026-11-06. Decided by: Joshua.
+- **Decision:**
+  - Implements D-003's equal tuning budget and ANALYSIS_PLAN.md section 6 in src/tune.py. Every tuned model gets 20 Optuna trials (TPE sampler, seed = project seed + retune year) in each of the retune years 2005, 2010, 2015 and 2020 (and 2025 for the holdout run).
+  - Each trial is fitted on the training window minus its last year and scored by MCC on that year, with the one-day purge in between. The best settings are refitted on each fold's full training window.
+  - Trial 0 is always the starting settings from config.yaml (D-018, D-021, D-022).
+  - Search spaces are in config.yaml (tuning.spaces).
+  - Each model is tuned separately on its own encoding: lightgbm_a and lightgbm_b can end up with different settings.
+  - Results are cached in results/tuning/ with every trial recorded, and the settings each fold used are written to results/<version>/tuned_settings.csv.
+  - `python src/run.py --untuned` still runs the starting settings, which reproduces results v1 and v2.
+- **Why:** Starting from the hand-set settings makes tuning a guaranteed improvement on the tuning year rather than a gamble. Tuning each model–encoding pair separately is what a practitioner would do and keeps the grid comparison fair. Caching makes reruns cheap after changes that don't affect training, such as new metrics or the backtest.
+- **Known limitation:** A tuning year has about 5,500 labelled stock-days, so its MCC has a standard error of about 0.013, as large as the differences between settings. Tuning mostly guards against badly chosen settings rather than finding a strong signal, and the paper says so.
 
 ---
 

@@ -75,8 +75,17 @@ Models are named `model_encoding` (for example `lightgbm_a`, `svm_ohlc`). All mo
 - Walk-forward: an expanding training window from 2002-01-02, with one test year at a time from 2005 to 2022 (18 folds). Splits are by calendar date, so all stocks' rows for a day land together.
 - **Purge:** the last *h* trading days before each test year are removed from training (*h* = 1).
 - **Tuning:** inside each training window only. Fit on all but the last year, score on that last year (with an *h*-day purge), then refit the chosen settings on the whole window.
-  - Every model family, the pattern models included, gets the same budget: 20 Optuna trials.
+  - Every model family, the pattern models included, gets the same budget: 20 Optuna trials (TPE sampler, seeded with the project seed plus the retune year).
   - Selection criterion: MCC on the tuning year.
+  - The first trial is always the family's starting settings from `config.yaml` (models), so tuning never picks settings that did worse than them on the tuning year.
+  - Search spaces are fixed in `config.yaml` (tuning.spaces) and reported in the paper:
+    - LightGBM: number of trees, learning rate, leaves, minimum leaf size, column sampling, L2 penalty.
+    - Random forest: minimum leaf size, columns tried per split.
+    - SVM: C and the RBF width gamma.
+    - MLP: layer sizes, L2 penalty, learning rate.
+    - k-NN: k.
+    - Pattern miner: shrinkage weight m and minimum count.
+  - Not tuned: the baselines (nothing to tune), and the k-NN window length and the miner's maximum context length, which define separate models.
   - Re-tuning happens in the folds starting 2005, 2010, 2015 and 2020; folds in between reuse the most recent settings.
   - The 2025 retuning applies only to the holdout run.
 

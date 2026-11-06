@@ -142,3 +142,42 @@ models:
     # least min_count times in the training data; if none qualifies, predict the
     # base rate. Fixed for now; tuned in week 6.
     min_count: 30
+
+tuning:
+  # Hyperparameter tuning (week 6, ANALYSIS_PLAN.md section 6). Every model
+  # family with settings to tune gets the same budget: n_trials Optuna trials,
+  # each fitted on the training window minus its last year and scored by MCC on
+  # that last year (splits.tuning_years, with the purge gap in between). The
+  # first trial is always the family's settings from `models` above, so tuning
+  # never picks something that did worse than them on the tuning year.
+  # Tuning happens in the folds of retune_years; the folds in between reuse the
+  # most recent settings. 2025 is used only once the holdout is unlocked.
+  # Results are cached in results/tuning/ and reused while this section and
+  # the model's settings are unchanged (python src/run.py --retune to redo).
+  n_trials: 20
+  retune_years: [2005, 2010, 2015, 2020, 2025]
+  # Search spaces: float/int ranges (log: true searches on a log scale) or a
+  # list of categorical choices. Settings not listed stay as in `models`.
+  spaces:
+    lightgbm:
+      n_estimators: {type: int, low: 50, high: 500, log: true}
+      learning_rate: {type: float, low: 0.01, high: 0.2, log: true}
+      num_leaves: {type: int, low: 4, high: 64, log: true}
+      min_child_samples: {type: int, low: 50, high: 2000, log: true}
+      colsample_bytree: {type: float, low: 0.5, high: 1.0}
+      reg_lambda: {type: float, low: 0.001, high: 10.0, log: true}
+    random_forest:
+      min_samples_leaf: {type: int, low: 50, high: 2000, log: true}
+      max_features: {type: categorical, choices: [sqrt, 0.25, 0.5, 1.0]}
+    svm:
+      C: {type: float, low: 0.01, high: 100.0, log: true}
+      gamma: {type: float, low: 0.001, high: 1.0, log: true}
+    mlp:
+      hidden_layer_sizes: {type: categorical, choices: [[16], [32, 16], [64, 32]]}
+      alpha: {type: float, low: 0.00001, high: 0.1, log: true}
+      learning_rate_init: {type: float, low: 0.0001, high: 0.01, log: true}
+    knn:
+      k: {type: int, low: 10, high: 1000, log: true}
+    pattern_miner:
+      shrinkage_m: {type: float, low: 1.0, high: 1000.0, log: true}
+      min_count: {type: int, low: 5, high: 500, log: true}

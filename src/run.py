@@ -2,18 +2,22 @@
 
 Usage
 -----
-    python src/run.py --version v1                    # every model in EXPERIMENTS
+    python src/run.py --version v3                    # every model, tuned
     python src/run.py --version v0 --models majority always_long previous_day random
+    python src/run.py --version v2b --untuned         # config.yaml settings, no tuning
 
 Steps:
   1. Check data/raw against data/manifest.json (stop if the data changed).
   2. Build the pooled table of features and labels for the 22 selected stocks.
-  3. For each fold (test years 2005-2022): fit each model on the training days
-     that have a label, using only that model's feature columns, then predict
-     every test day.
-  4. Score the predictions (accuracy, balanced accuracy, MCC) and backtest them
+  3. Tune every model that has a search space (tune.py): 20 Optuna trials in
+     each retune year, scored on the last year of the training window. Cached
+     in results/tuning/; --retune redoes it, --untuned skips it.
+  4. For each fold (test years 2005-2022): fit each model on the training days
+     that have a label, using only that model's feature columns and its tuned
+     settings, then predict every test day.
+  5. Score the predictions (accuracy, balanced accuracy, MCC) and backtest them
      (long/short and long/flat at the headline cost).
-  5. Write everything to results/<version>/, stamped with the git commit, and
+  6. Write everything to results/<version>/, stamped with the git commit, and
      run the sanity checks for the baselines. Models that describe themselves
      (the pattern miner reports which context lengths it used) also get a row
      per fold in diagnostics.csv.
@@ -44,6 +48,7 @@ from models.baselines import AlwaysLong, Majority, PreviousDay, RandomGuess  # n
 from models.ml import LightGBMModel  # noqa: E402
 from models.pattern import KNNModel, PatternMiner  # noqa: E402
 from splits import walk_forward  # noqa: E402
+from tune import settings_table, tuned_settings, with_settings  # noqa: E402
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -67,22 +72,29 @@ def experiments() -> dict:
     lightgbm_b uses continuous encoding B over a window of days, and knn_b3 /
     knn_b5 compare 3- and 5-day windows of continuous encoding B, and
     pattern_miner reads the last 1-3 daily symbols of symbolic encoding B.
+
+    A spec with "tune" names its search space in config.yaml (tuning.spaces);
+    its make(fold, **settings) accepts tuned settings, and without any it uses
+    the settings in config.yaml (models).
     """
     seed = load_config()["seed"]
     a_cols = [pattern_column(p) for p in PATTERNS]
     b_cols = window_columns()
     spec = {name: {"feature_sets": ["normalized_ohlc"], "features": ["n_close"], "make": make}
             for name, make in baseline_models().items()}
+    lightgbm = lambda fold, **p: LightGBMModel(seed=seed + fold.test_year, **p)  # noqa: E731
     spec["lightgbm_a"] = {"feature_sets": ["encoding_a"], "features": a_cols,
-                          "make": lambda fold: LightGBMModel(seed=seed + fold.test_year)}
+                          "make": lightgbm, "tune": "lightgbm"}
     spec["lightgbm_b"] = {"feature_sets": ["encoding_b_window"], "features": b_cols,
-                          "make": lambda fold: LightGBMModel(seed=seed + fold.test_year)}
+                          "make": lightgbm, "tune": "lightgbm"}
     for days in load_config()["models"]["knn"]["windows"]:
         spec[f"knn_b{days}"] = {"feature_sets": ["encoding_b_window"], "features": window_columns(days),
-                                "make": lambda fold: KNNModel()}
+                                "make": lambda fold, **p: KNNModel(**p), "tune": "knn"}
     spec["pattern_miner"] = {"feature_sets": ["encoding_b_symbol_window"],
                              "features": symbol_window_columns(),
-                             "make": lambda fold: PatternMiner()}
+                             "make": lambda fold, shrinkage_m=None, min_count=None:
+                                 PatternMiner(m=shrinkage_m, min_count=min_count),
+                             "tune": "pattern_miner"}
     return spec
 
 
@@ -172,6 +184,10 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     parser.add_argument("--version", default="v1", help="results go in results/<version>/")
     parser.add_argument("--models", nargs="+", help="which models to run (default: all)")
+    parser.add_argument("--untuned", action="store_true",
+                        help="use the settings in config.yaml (models) instead of tuning")
+    parser.add_argument("--retune", action="store_true",
+                        help="tune again even if results/tuning/ has a matching cached result")
     args = parser.parse_args()
     specs = experiments()
     if args.models:
@@ -195,6 +211,16 @@ def main() -> int:
     feature_sets = sorted({fs for sp in specs.values() for fs in sp["feature_sets"]})
     table = build_table(feature_sets=feature_sets)
     folds = walk_forward(table.index)
+
+    tuned = {}
+    tunable = [] if args.untuned else [name for name, sp in specs.items() if "tune" in sp]
+    if tunable:
+        print(f"Tuning {len(tunable)} models, {cfg['tuning']['n_trials']} trials per retune year "
+              f"(cached in results/tuning/):")
+        for name in tunable:
+            tuned[name] = tuned_settings(table, folds, name, specs[name], retune=args.retune, stamp=stamp)
+            specs[name] = with_settings(specs[name], tuned[name])
+        print()
     print(f"Running {len(specs)} models on {len(folds)} folds: ", end="", flush=True)
     diag = []
     preds = run_experiments(table, folds, specs, diagnostics=diag,
@@ -212,12 +238,16 @@ def main() -> int:
     preds.to_parquet(out / "predictions.parquet")
     written = ["summary.csv", "metrics_by_year.csv", "metrics_by_stock.csv", "backtest.csv",
                "run_info.json", "predictions.parquet"]
+    if tuned:
+        settings_table(tuned).assign(git_commit=stamp).to_csv(out / "tuned_settings.csv", index=False)
+        written.append("tuned_settings.csv")
     if diag:
         pd.DataFrame(diag).assign(git_commit=stamp).to_csv(out / "diagnostics.csv", index=False)
         written.append("diagnostics.csv")
     (out / "run_info.json").write_text(json.dumps({
         "git_commit": stamp, "run_at": run_at, "folds": [f.test_year for f in folds],
         "models": {name: sp["features"] for name, sp in specs.items()},
+        "tuned": sorted(tuned), "untuned": bool(args.untuned),
         "stocks": int(table["ticker"].nunique()), "test_days": int(len(preds) // preds["model"].nunique()),
         "first_date": str(table.index.min().date()), "last_date": str(table.index.max().date()),
         "config": cfg}, indent=2, default=str) + "\n")
