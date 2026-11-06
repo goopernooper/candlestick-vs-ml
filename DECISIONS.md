@@ -36,6 +36,7 @@ Professor Danisman gave full latitude on design, so entries marked "Decided by: 
 | D-019 | Reversal baseline (post hoc) | Decided | 2026-11-03 |
 | D-020 | Today's-return ablation (post hoc) | Decided | 2026-11-03 |
 | D-021 | Pattern miner settings for results v2 | Decided | 2026-11-03 |
+| D-022 | Random forest, SVM and MLP: first settings and the SVM training cap | Decided | 2026-11-06 |
 
 ---
 
@@ -202,6 +203,16 @@ Fill in **Decided** during the meeting, update the index, and commit.
 - **Decision:** The pattern miner uses contexts of 1 to 3 daily symbols (symbolic encoding B), shrinks each context's up rate toward the training base rate with m = 100, and predicts from the longest context seen at least 30 times in training, backing off to shorter contexts and then to the base rate (config.yaml, models: pattern_miner). As with D-018, m and min_count are replaced by settings tuned inside each training window in week 6.
 - **Why:** The first training window (2002–2004) has about 16,600 stock-days for 8,000 possible 3-day contexts, about two per context, so most raw up rates are noise (the exact counts are in results/pattern_context_counts.csv, from `python src/pattern_report.py`). On synthetic noise sized like that window, the miner without shrinkage or a minimum count scored about 76% on its training data and 50% on new data; with these settings the gap was about 4 points. On synthetic data with a planted 3-day pattern (up 70% of the time, about 1% of days), the miner with these settings kept the pattern in all 20 samples tried, ranked it first of about 400 contexts in 18 and never lower than third (tests/test_pattern_miner_synthetic.py).
 - **Consequences:** results/<version>/diagnostics.csv records, for each fold, how many contexts of each length were kept and which context length each test prediction used.
+
+### D-022: Random forest, SVM and MLP: first settings and the SVM training cap
+- **Status:** Decided, 2026-11-06. Decided by: Joshua.
+- **Decision:**
+  - Random forest, RBF-kernel SVM and a small MLP (two hidden layers of 32 and 16 units) from scikit-learn 1.9.1, with the shared interface and per-fold seeds used by LightGBM. Starting settings are in config.yaml (models); like D-018 and D-021, they are replaced by settings tuned inside each training window.
+  - The SVM and MLP standardize every column using the training days only; the tree models use the raw columns.
+  - **SVM training cap:** each SVM fit uses at most 20,000 training days, a random sample drawn with the fold's seed from the whole training window. Windows smaller than that (the 2005 fold has about 16,600 days) are used in full.
+  - The SVM's confidence score is the logistic function of its decision function. It is above 0.5 exactly when the SVM predicts up and orders days by distance from the decision boundary, but it is not a calibrated probability.
+- **Why:** On data this noisy, nearly every training day becomes a support vector (about 97% in timing runs on synthetic prices sized like the real data), and SVM training time grows roughly with the square of the number of rows. Timed on 2 CPU cores: 20,000 rows take 10–30 seconds per fit depending on the encoding, while a full 100,000-row window would take an estimated 10 minutes per fit, too slow for 18 folds, three encodings and the tuning budget. Sampling from the whole window keeps the variety of market conditions the other models see. SVC's built-in probabilities (`probability=True`) would fit five extra models per fit and can disagree with the SVM's own predictions; no analysis needs calibrated probabilities, since classification uses the 0.5 cut and the coverage analysis only ranks days by confidence.
+- **Consequences:** The paper reports the cap as a limitation of the SVM comparison: the SVM sees at most 20,000 of the up to about 100,000 training days. The number of rows and support vectors in each SVM fit is recorded in results/<version>/diagnostics.csv, as are the MLP's epochs and whether it converged.
 
 ---
 

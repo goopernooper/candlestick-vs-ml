@@ -86,6 +86,36 @@ models:
     colsample_bytree: 0.8
     reg_lambda: 1.0
     n_jobs: 4                # fixed thread count: LightGBM is only exactly reproducible with the same count
+  random_forest:
+    # scikit-learn RandomForestClassifier (week 6). Fixed settings until tuning,
+    # chosen to match LightGBM's caution: large leaves so no tree fits noise.
+    n_estimators: 300
+    max_features: sqrt        # columns tried at each split
+    min_samples_leaf: 500     # same idea as LightGBM's min_child_samples
+    n_jobs: 4                 # results are identical for any thread count
+  svm:
+    # scikit-learn SVC with an RBF kernel, on standardized features (week 6).
+    # Training time grows roughly with the square of the number of rows, and on
+    # data this noisy nearly every row becomes a support vector, so a full
+    # 100,000-row training window takes ~10 minutes per fit. Each fit therefore
+    # uses a fixed-seed random sample of at most max_train_rows training days,
+    # drawn from the whole window (DECISIONS.md D-022). null = no cap.
+    C: 1.0
+    gamma: scale              # 1 / (number of features x feature variance)
+    max_train_rows: 20000
+    cache_size_mb: 1000
+  mlp:
+    # scikit-learn MLPClassifier, a small neural network, on standardized
+    # features (week 6). Early stopping holds out a random 10% of the training
+    # days and stops when their score hasn't improved for n_iter_no_change epochs.
+    hidden_layer_sizes: [32, 16]
+    alpha: 0.001              # L2 penalty
+    learning_rate_init: 0.001
+    batch_size: 512
+    max_iter: 200
+    early_stopping: true
+    validation_fraction: 0.1
+    n_iter_no_change: 10
   knn:
     # k-nearest neighbours: for each test day, find the k most similar candle
     # windows in the training data (all stocks pooled) and predict the share of

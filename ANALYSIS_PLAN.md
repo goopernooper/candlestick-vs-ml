@@ -63,7 +63,7 @@ Bin edges for symbolic B are fixed in `config.yaml` (body ±0.1 and ±0.6 ATR, w
 **Machine learning models**, each trained on encoding A, B continuous (3-day window), and normalized OHLC:
 - random forest (`rf`)
 - LightGBM (`lightgbm`)
-- SVM with an RBF kernel (`svm`). Its decision function is used as the confidence score. If it is too slow on pooled data, training rows are capped by a fixed-seed random sample, and the cap is recorded here before results are produced.
+- SVM with an RBF kernel (`svm`). Its confidence score is the logistic function of its decision function (above 0.5 exactly when it predicts up). Training is capped at **20,000 rows per fit**, a fixed-seed random sample from the whole training window, because full pooled windows are too slow (D-022). The cap was set on 2026-11-06, before any SVM results were produced.
 - small multilayer perceptron (`mlp`)
 
 **Optional** (only if ahead of schedule; listed so that adding them is not a deviation): DTW distance for k-NN; an LSTM; the 5-day forward target.
