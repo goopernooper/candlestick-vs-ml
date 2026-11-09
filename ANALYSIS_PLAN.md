@@ -19,6 +19,7 @@ Decision numbers (D-xxx) refer to DECISIONS.md. Items added after seeing develop
 2. *Cost sensitivity:* at what transaction cost does any edge disappear?
 3. *Regimes:* does the ranking of models change between low-, medium- and high-volatility periods?
 4. *Reversal:* is any edge more than the known short-term reversal effect? Added after results v1 showed the previous-day baseline with a negative MCC in 15 of 18 years. **Post hoc** (D-019): this question arose from development results and is reported as such.
+5. *Replication:* do the eight reversal patterns of Caginalp & Laurent (1998) predict returns on our stocks in 2002–2022, with and without their trend condition, and how does their per-signal significance test compare with a test that allows for signals on the same day moving together? **Post hoc, descriptive** (D-026).
 
 ---
 
@@ -45,7 +46,7 @@ All computed once, shared by every model, and tested for look-ahead (`tests/test
 | B continuous, 3-day window | body, upper wick, lower wick, gap in ATR units, for days *t*, *t*−1, *t*−2 (12 columns) | ML models; k-NN |
 | B continuous, 5-day window | as above, for five days (20 columns) | k-NN |
 | B symbolic | 20 symbols per day (5 body levels × long/short upper wick × long/short lower wick) | pattern miner |
-| Normalized OHLC | open, high, low, close minus the previous close, in ATR units (4 columns) | ML models (ablation) |
+| Normalized OHLC, 3-day window | open, high, low, close minus the previous close, in ATR units, for days *t*, *t*−1, *t*−2 (12 columns): the same information as the 3-day window of continuous B. Results v3 used day *t* only; **post hoc** change (D-024) | ML models (ablation) |
 | Today's return only | `n_close` (1 column) | LightGBM ablation, **post hoc** (D-020) |
 
 Bin edges for symbolic B are fixed in `config.yaml` (body ±0.1 and ±0.6 ATR, wicks 0.25 ATR) and are not changed after this plan is frozen.
@@ -100,6 +101,7 @@ Models are named `model_encoding` (for example `lightgbm_a`, `svm_ohlc`). All mo
 - Sharpe ratio (no risk-free rate) at 5 bps per side
 - annualized return, maximum drawdown, turnover
 - **break-even cost:** the cost per side at which annual long/short return reaches zero
+- **market exposure:** each strategy's daily net return regressed on the equal-weight return of the 22 stocks, giving beta, annualized alpha with a Newey–West t-statistic, the information ratio and the average net exposure. **Post hoc** (D-025), descriptive.
 
 **Cost grid:** 0, 1, 2, 5, 10, 20 bps per side. Headline: 5 bps (D-013).
 

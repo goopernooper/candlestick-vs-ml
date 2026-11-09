@@ -38,6 +38,9 @@ Professor Danisman gave full latitude on design, so entries marked "Decided by: 
 | D-021 | Pattern miner settings for results v2 | Decided | 2026-11-03 |
 | D-022 | Random forest, SVM and MLP: first settings and the SVM training cap | Decided | 2026-11-06 |
 | D-023 | Tuning protocol details | Decided | 2026-11-06 |
+| D-024 | Normalized OHLC over the same 3-day window as encoding B (post hoc) | Decided | 2026-11-09 |
+| D-025 | Market-exposure check: beta and alpha against buy-and-hold (post hoc) | Decided | 2026-11-09 |
+| D-026 | Replication of Caginalp & Laurent's patterns (post hoc, descriptive) | Decided | 2026-11-09 |
 
 ---
 
@@ -227,6 +230,30 @@ Fill in **Decided** during the meeting, update the index, and commit.
   - `python src/run.py --untuned` still runs the starting settings, which reproduces results v1 and v2.
 - **Why:** Starting from the hand-set settings makes tuning a guaranteed improvement on the tuning year rather than a gamble. Tuning each model–encoding pair separately is what a practitioner would do and keeps the grid comparison fair. Caching makes reruns cheap after changes that don't affect training, such as new metrics or the backtest.
 - **Known limitation:** A tuning year has about 5,500 labelled stock-days, so its MCC has a standard error of about 0.013, as large as the differences between settings. Tuning mostly guards against badly chosen settings rather than finding a strong signal, and the paper says so.
+
+### D-024: Normalized OHLC over the same 3-day window as encoding B
+- **Status:** Decided, 2026-11-09. Decided by: Joshua.
+- **Decision:**
+  - From results v4 on, the grid's "ohlc" models (`lightgbm_ohlc`, `rf_ohlc`, `svm_ohlc`, `mlp_ohlc`) use normalized open, high, low and close for day *t* and the two previous days (12 columns, `normalized_ohlc_window`), the same 3-day window as encoding B. Results v3 used day *t* only (4 columns).
+  - The tuning cache now records each model's feature columns and is reused only when they match. The four day-*t* caches were deleted, and the other caches were marked with the columns they were tuned on.
+- **Why:** The fair-features question (ANALYSIS_PLAN.md, secondary question 1) compares the same information described in different ways. A 3-day window of normalized prices and a 3-day window of continuous encoding B can each be computed exactly from the other (tests/test_normalized_ohlc.py). In v3, the "ohlc" models saw one day while the "b" models saw three, which mixed the effect of the representation with the effect of seeing more history.
+- **Post hoc:** Noticed while reading results v3, before the analysis plan was frozen. Reported in the paper as a change made after seeing development results. v3 stays in the repository unchanged.
+
+### D-025: Market-exposure check: beta and alpha against buy-and-hold
+- **Status:** Decided, 2026-11-09. Decided by: Joshua.
+- **Decision:** For every model and strategy, regress the daily net portfolio return (at 5 bps) on the equal-weight market return of the 22 stocks. Report beta, annualized alpha, alpha's Newey–West t-statistic (lag rule of ANALYSIS_PLAN.md section 8), the information ratio and the average net exposure (src/exposure.py). Written to results/<version>/exposure.csv by every run.
+- **Why:** In results v3, the SVMs predicted "up" on about 81% of days, so their long/short portfolios were heavily net long. Part of their 1.0–1.25 Sharpe ratio is market exposure that buy-and-hold earns for free. Alpha separates the return a model adds from the return it gets by being long.
+- **Post hoc:** Added after seeing results v3. Descriptive: the formal tests remain those of ANALYSIS_PLAN.md section 8.
+
+### D-026: Replication of Caginalp & Laurent's patterns
+- **Status:** Decided, 2026-11-09. Decided by: Joshua.
+- **Decision:** Test the eight three-day reversal patterns of Caginalp & Laurent (1998) on our 22 stocks over 2002–2022 (src/replicate_caginalp.py), using TA-Lib's definitions from encoding A.
+  - Trend conditions: none, or a 3-day moving average of closes that fell (rose) over six days before the pattern, in two readings: net change, and every one of the six days.
+  - Holding periods: our next-day target, and buy at the next open and sell at the average of the next three closes, close to their design.
+  - Statistics: their kind of test (binomial, every signal independent), and a t-statistic on date-averaged market-adjusted returns with Newey–West errors (D-005). Signals whose exit falls in the 2023 holdout are excluded.
+- **Why:** Caginalp & Laurent is the strongest published evidence that candlestick patterns predict returns, and Marshall et al. (2006) found the opposite. Testing their patterns directly on our data lets the paper say whether their result holds in 2002–2022. Showing both statistics shows how much treating correlated signals as independent overstates significance.
+- **Caveat:** Their trend rule and holding period are taken from a secondary description (an open-access University of Cape Town thesis), not the paper. Check them against the paper before the results are written up.
+- **Post hoc, descriptive:** It does not affect any model or the main comparison.
 
 ---
 

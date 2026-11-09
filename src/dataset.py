@@ -27,6 +27,20 @@ def selected_stocks() -> list[str]:
     return u.loc[u["role"] == "selected", "ticker"].tolist()
 
 
+def merge_parts(parts) -> pd.DataFrame:
+    """Join feature sets side by side. Feature sets may share columns (the
+    3-day normalized-OHLC window contains today's normalized OHLC); a shared
+    column is kept once, and must be identical in every set that has it."""
+    out = parts[0]
+    for part in parts[1:]:
+        shared = [c for c in part.columns if c in out.columns]
+        for c in shared:
+            if not out[c].equals(part[c]):
+                raise ValueError(f"feature sets disagree on column {c!r}")
+        out = pd.concat([out, part.drop(columns=shared)], axis=1)
+    return out
+
+
 def build_table(stocks=None, feature_sets=("normalized_ohlc",), loader=None) -> pd.DataFrame:
     if loader is None:
         import data
@@ -39,7 +53,7 @@ def build_table(stocks=None, feature_sets=("normalized_ohlc",), loader=None) -> 
     for t in stocks:
         df = loader(t)
         parts = [FEATURE_SETS[name](df) for name in feature_sets] + [make_labels(df)]
-        frame = pd.concat(parts, axis=1).loc[start:]
+        frame = merge_parts(parts).loc[start:]
         frames.append(frame.assign(ticker=t))
     table = pd.concat(frames)
     table.index.name = "date"

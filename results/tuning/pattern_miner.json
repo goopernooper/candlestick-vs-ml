@@ -28,7 +28,12 @@
       "horizon": 1,
       "dead_zone_k": 0.1,
       "vol_window": 20
-    }
+    },
+    "features": [
+      "b_symbol",
+      "b_symbol_lag1",
+      "b_symbol_lag2"
+    ]
   },
   "years": {
     "2005": {

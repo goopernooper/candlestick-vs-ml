@@ -262,6 +262,29 @@ def normalized_ohlc(df: pd.DataFrame) -> pd.DataFrame:
 # ---------------------------------------------------------------------------
 # Encoding B over a window of days (what the ML models see)
 # ---------------------------------------------------------------------------
+def normalized_ohlc_window(df: pd.DataFrame, days: int | None = None) -> pd.DataFrame:
+    """Normalized OHLC for today and the previous days, laid out like
+    encoding_b_window: n_open, n_high, n_low, n_close for today, then the same
+    four with _lag1, _lag2, ... (window_days in config.yaml, encoding_b).
+
+    Each day is measured from its own previous close in its own lagged ATR,
+    exactly as encoding B is, so a window of these and a window of encoding B
+    hold the same information, day by day (see normalized_ohlc). The grid's
+    "ohlc" models use this window so that the comparison with encoding B differs
+    only in how the candle is described, not in how many days the model sees
+    (DECISIONS.md D-024). Lags stay within one stock and only reach backward.
+    """
+    days = load_config()["encoding_b"]["window_days"] if days is None else days
+    today = normalized_ohlc(df)
+    parts = [today] + [today.shift(k).add_suffix(f"_lag{k}") for k in range(1, days)]
+    return pd.concat(parts, axis=1)
+
+
+def ohlc_window_columns(days: int | None = None) -> list[str]:
+    days = load_config()["encoding_b"]["window_days"] if days is None else days
+    return NORMALIZED_OHLC + [f"{c}_lag{k}" for k in range(1, days) for c in NORMALIZED_OHLC]
+
+
 def encoding_b_window(df: pd.DataFrame, days: int | None = None) -> pd.DataFrame:
     """Continuous encoding B for today and the previous days.
 
@@ -318,4 +341,5 @@ FEATURE_SETS = {
     "encoding_b_symbolic": encoding_b_symbolic,
     "encoding_b_symbol_window": lambda df: encoding_b_symbol_window(df),
     "normalized_ohlc": normalized_ohlc,
+    "normalized_ohlc_window": lambda df: normalized_ohlc_window(df),
 }

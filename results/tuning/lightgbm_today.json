@@ -57,7 +57,10 @@
       "horizon": 1,
       "dead_zone_k": 0.1,
       "vol_window": 20
-    }
+    },
+    "features": [
+      "n_close"
+    ]
   },
   "years": {
     "2005": {

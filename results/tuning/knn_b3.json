@@ -25,7 +25,21 @@
       "horizon": 1,
       "dead_zone_k": 0.1,
       "vol_window": 20
-    }
+    },
+    "features": [
+      "b_body",
+      "b_upper",
+      "b_lower",
+      "b_gap",
+      "b_body_lag1",
+      "b_upper_lag1",
+      "b_lower_lag1",
+      "b_gap_lag1",
+      "b_body_lag2",
+      "b_upper_lag2",
+      "b_lower_lag2",
+      "b_gap_lag2"
+    ]
   },
   "years": {
     "2005": {

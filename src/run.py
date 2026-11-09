@@ -42,8 +42,9 @@ import pandas as pd
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from dataset import build_table  # noqa: E402
 from evaluate import backtest, summarize  # noqa: E402
-from features import (PATTERNS, load_config, pattern_column, symbol_window_columns,  # noqa: E402
-                      window_columns)
+from exposure import exposure_table  # noqa: E402
+from features import (PATTERNS, load_config, ohlc_window_columns, pattern_column,  # noqa: E402
+                      symbol_window_columns, window_columns)
 from models.baselines import AlwaysLong, Majority, PreviousDay, RandomGuess, Reversal  # noqa: E402
 from models.ml import LightGBMModel, MLPModel, RandomForestModel, SVMModel  # noqa: E402
 from models.pattern import KNNModel, PatternMiner  # noqa: E402
@@ -74,15 +75,12 @@ ML_MODELS = {
     "svm": (SVMModel, "svm"),
     "mlp": (MLPModel, "mlp"),
 }
-OHLC_COLUMNS = ["n_open", "n_high", "n_low", "n_close"]
-
-
 def encodings() -> dict:
     """name suffix -> (feature set to build, columns): the three encodings in the grid."""
     return {
         "a": ("encoding_a", [pattern_column(p) for p in PATTERNS]),     # 61 TA-Lib patterns, day t
         "b": ("encoding_b_window", window_columns()),                   # candle shape, days t-2..t
-        "ohlc": ("normalized_ohlc", OHLC_COLUMNS),                     # same information as B, day t
+        "ohlc": ("normalized_ohlc_window", ohlc_window_columns()),     # same information as b (D-024)
     }
 
 
@@ -93,7 +91,9 @@ def experiments() -> dict:
       baselines        majority, always_long, previous_day, random, reversal
       the grid         {lightgbm, rf, svm, mlp} x {a, b, ohlc}: encoding A's 61
                        pattern columns, continuous encoding B over a 3-day
-                       window, or normalized prices for day t (12 models)
+                       window, or normalized prices over the same 3-day window
+                       (the same information as b, described differently;
+                       results v3 used day t only, D-024) (12 models)
       lightgbm_today   LightGBM on today's return in ATRs (n_close) only: the
                        post hoc ablation of D-020
       knn_b3, knn_b5   k-NN on 3- and 5-day windows of continuous encoding B
@@ -265,9 +265,11 @@ def main() -> int:
     summarize(preds, by=["model", "test_year"]).assign(git_commit=stamp).to_csv(out / "metrics_by_year.csv", index=False)
     summarize(preds, by=["model", "ticker"]).assign(git_commit=stamp).to_csv(out / "metrics_by_stock.csv", index=False)
     backtest(preds, costs_bps=cfg["backtest"]["cost_grid_bps"]).assign(git_commit=stamp).to_csv(out / "backtest.csv", index=False)
+    exposure = exposure_table(preds, cost_bps=cost)
+    exposure.assign(git_commit=stamp).to_csv(out / "exposure.csv", index=False)
     preds.to_parquet(out / "predictions.parquet")
     written = ["summary.csv", "metrics_by_year.csv", "metrics_by_stock.csv", "backtest.csv",
-               "run_info.json", "predictions.parquet"]
+               "exposure.csv", "run_info.json", "predictions.parquet"]
     if tuned:
         settings_table(tuned).assign(git_commit=stamp).to_csv(out / "tuned_settings.csv", index=False)
         written.append("tuned_settings.csv")
@@ -282,11 +284,16 @@ def main() -> int:
         "first_date": str(table.index.min().date()), "last_date": str(table.index.max().date()),
         "config": cfg}, indent=2, default=str) + "\n")
 
-    show = summary[["model", "accuracy", "balanced_accuracy", "mcc", "ls_ann_return", "ls_sharpe",
-                    "lf_ann_return", "lf_sharpe"]]
+    ls_exposure = (exposure[exposure["strategy"] == "long_short"].set_index("model")
+                   [["beta", "alpha_t"]].add_prefix("ls_"))
+    show = (summary[["model", "accuracy", "balanced_accuracy", "mcc", "ls_ann_return", "ls_sharpe",
+                     "lf_ann_return", "lf_sharpe"]]
+            .join(ls_exposure, on="model").sort_values("mcc", ascending=False))
     print(f"Results {args.version} (commit {stamp}), {len(folds)} folds, "
           f"{table['ticker'].nunique()} stocks, costs {cost} bps per side:\n")
     print(show.to_string(index=False, float_format=lambda x: f"{x:.4f}"))
+    print("\n  ls_beta / ls_alpha_t: long/short regressed on buy-and-hold (exposure.csv). A beta near 0 "
+          "means market-neutral;\n  alpha_t above ~2 means more return than the market exposure explains.")
     print()
     ok = True
     for name, passed in baseline_checks(summary):
@@ -295,7 +302,9 @@ def main() -> int:
     if diag:
         d = pd.DataFrame(diag)
         for name, g in d.groupby("model"):
-            used = g.filter(like="used_len").mean()
+            used = g.filter(like="used_len").mean().dropna()
+            if used.empty:              # only the pattern miner reports context lengths
+                continue
             print(f"  {name}: share of test predictions by context length, averaged over folds: "
                   + ", ".join(f"{c.removeprefix('used_len')}d {v:.0%}" for c, v in used.items())
                   + "  (0d = base rate)")

@@ -175,3 +175,30 @@ def test_untuned_specs_still_use_config_settings(folds):
     assert spec["knn_b3"]["make"](folds[0]).k == cfg["knn"]["k"]
     assert spec["lightgbm_a"]["make"](folds[0]).params == cfg["lightgbm"]
     assert spec["lightgbm_a"]["make"](folds[0], num_leaves=7).params["num_leaves"] == 7
+
+
+def test_cache_is_tied_to_the_feature_columns(table, folds, miner, tmp_path):
+    """Same name, different columns: tuned again, never reused (D-024)."""
+    from models.baselines import Majority
+    one = {"features": ["n_close"], "tune": "pattern_miner",
+           "make": lambda fold, shrinkage_m=None, min_count=None: Majority()}
+    two = {**one, "features": ["n_open", "n_close"]}
+    tuned_settings(table, folds[:1], "same_name", one, cache_dir=tmp_path, log=lambda _: None)
+    logs = []
+    tuned_settings(table, folds[:1], "same_name", one, cache_dir=tmp_path, log=logs.append)
+    assert "cached" in logs[0]
+    tuned_settings(table, folds[:1], "same_name", two, cache_dir=tmp_path, log=logs.append)
+    assert "tuned" in logs[1]
+
+
+def test_committed_caches_match_the_models():
+    """Every cache in results/tuning/ was tuned on the columns its model uses now."""
+    cache = Path(__file__).resolve().parents[1] / "results" / "tuning"
+    files = sorted(cache.glob("*.json"))
+    if not files:
+        pytest.skip("no committed tuning results")
+    spec = experiments()
+    for path in files:
+        saved = json.loads(path.read_text())
+        assert path.stem in spec, f"{path.name}: no such model"
+        assert saved["setup"].get("features") == spec[path.stem]["features"], path.name

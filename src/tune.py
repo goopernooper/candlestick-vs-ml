@@ -13,9 +13,9 @@ Every family gets the same number of trials, so differences between models
 reflect the model class rather than the effort spent tuning it.
 
 Results are cached in results/tuning/<model>.json, one entry per retune year,
-recording every trial. An entry is reused only while the search space, the
-trial budget, the seed, the model's settings in config.yaml and the tuning
-split are unchanged; run.py --retune ignores the cache.
+recording every trial. An entry is reused only while the model's feature
+columns, the search space, the trial budget, the seed, the model's settings in
+config.yaml and the tuning split are unchanged; run.py --retune ignores the cache.
 
 Caveat for the paper: one tuning year is about 5,500 labelled stock-days, so
 MCC on it has a standard error of about 0.013, comparable to the differences
@@ -137,13 +137,14 @@ def retune_year_for(test_year: int, retune_years) -> int:
     return earlier[-1]
 
 
-def _setup(family: str) -> dict:
+def _setup(family: str, features) -> dict:
     """Everything a cached result depends on, apart from the data (which the
     manifest check fixes) and the code (rerun with --retune after changing it)."""
     cfg = load_config()
     return {"space": cfg["tuning"]["spaces"][family], "n_trials": cfg["tuning"]["n_trials"],
             "seed": cfg["seed"], "model_settings": cfg["models"][family],
-            "tuning_years": cfg["splits"]["tuning_years"], "labels": cfg["labels"]}
+            "tuning_years": cfg["splits"]["tuning_years"], "labels": cfg["labels"],
+            "features": list(features)}
 
 
 def tuned_settings(table: pd.DataFrame, folds, name: str, spec: dict, retune: bool = False,
@@ -158,7 +159,7 @@ def tuned_settings(table: pd.DataFrame, folds, name: str, spec: dict, retune: bo
     if missing:
         raise ValueError(f"{name}: retune years {missing} have no fold to tune in")
 
-    setup = _setup(family)
+    setup = _setup(family, spec["features"])
     path = None if cache_dir is None else Path(cache_dir) / f"{name}.json"
     cache = {}
     if path is not None and path.exists() and not retune:

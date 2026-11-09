@@ -136,7 +136,7 @@ def test_compare_runs_statuses():
 
 
 # --------------------------------------------------------- the full grid (week 6)
-from features import PATTERNS, load_config, pattern_column, window_columns  # noqa: E402
+from features import PATTERNS, load_config, ohlc_window_columns, pattern_column, window_columns  # noqa: E402
 from models.ml import LightGBMModel, MLPModel, RandomForestModel, SVMModel  # noqa: E402
 
 
@@ -147,8 +147,9 @@ def test_full_grid_is_registered():
                 "lightgbm_today", "knn_b3", "knn_b5", "pattern_miner"]
     assert list(spec) == expected
     cols = {"a": [pattern_column(p) for p in PATTERNS], "b": window_columns(),
-            "ohlc": ["n_open", "n_high", "n_low", "n_close"]}
-    sets = {"a": "encoding_a", "b": "encoding_b_window", "ohlc": "normalized_ohlc"}
+            "ohlc": ohlc_window_columns()}
+    assert len(cols["ohlc"]) == len(cols["b"]) == 12                # same 3 days (D-024)
+    sets = {"a": "encoding_a", "b": "encoding_b_window", "ohlc": "normalized_ohlc_window"}
     classes = {"lightgbm": LightGBMModel, "rf": RandomForestModel, "svm": SVMModel, "mlp": MLPModel}
     families = {"lightgbm": "lightgbm", "rf": "random_forest", "svm": "svm", "mlp": "mlp"}
     for name in grid:

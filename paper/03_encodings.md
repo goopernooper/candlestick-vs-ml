@@ -37,7 +37,7 @@ The symbolic version discretizes the body and the two wicks into a small alphabe
 
 ### 3.4 Normalized prices for the ablation
 
-To separate the effect of the encoding from the effect of the model, machine learning models are also trained on normalized prices: the open, high, low and close each minus the previous close, divided by ATR₍ₜ₋₁₎. Raw price levels are never used. These four values contain exactly the same information as continuous encoding B; for example, the body equals the normalized close minus the normalized open, and the gap equals the normalized open. Any difference between models trained on normalized prices and models trained on the symbolic or pattern encodings can therefore be attributed to the binning and the pattern definitions, not to a difference in available information.
+To separate the effect of the encoding from the effect of the model, machine learning models are also trained on normalized prices: the open, high, low and close each minus the previous close, divided by ATR₍ₜ₋₁₎. Raw price levels are never used. For a single day, these four values contain exactly the same information as continuous encoding B; for example, the body equals the normalized close minus the normalized open, and the gap equals the normalized open. Models are given normalized prices over the same three-day window as encoding B (12 values), so the two inputs differ only in how the candles are described, not in how many days the model sees. Any difference between models trained on normalized prices and models trained on the symbolic or pattern encodings can therefore be attributed to the binning and the pattern definitions, not to a difference in available information.
 
 ### 3.5 Prediction target
 
