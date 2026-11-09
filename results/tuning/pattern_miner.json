@@ -1,0 +1,735 @@
+{
+  "model": "pattern_miner",
+  "family": "pattern_miner",
+  "setup": {
+    "space": {
+      "shrinkage_m": {
+        "type": "float",
+        "low": 1.0,
+        "high": 1000.0,
+        "log": true
+      },
+      "min_count": {
+        "type": "int",
+        "low": 5,
+        "high": 500,
+        "log": true
+      }
+    },
+    "n_trials": 20,
+    "seed": 20261016,
+    "model_settings": {
+      "max_context": 3,
+      "shrinkage_m": 100,
+      "min_count": 30
+    },
+    "tuning_years": 1,
+    "labels": {
+      "horizon": 1,
+      "dead_zone_k": 0.1,
+      "vol_window": 20
+    }
+  },
+  "years": {
+    "2005": {
+      "params": {
+        "shrinkage_m": 2.24456650573989,
+        "min_count": 6
+      },
+      "mcc": 0.048872235539369854,
+      "default_mcc": 0.03929878004671656,
+      "fit_days": 10088,
+      "tune_days": 5058,
+      "tuning_set": "2004-01-02 to 2004-12-30",
+      "seconds": 0.2,
+      "trials": [
+        {
+          "number": 0,
+          "mcc": 0.03929878004671656,
+          "params": {
+            "shrinkage_m": 100.0,
+            "min_count": 30
+          }
+        },
+        {
+          "number": 1,
+          "mcc": 0.03458208464691251,
+          "params": {
+            "shrinkage_m": 345.58654699706705,
+            "min_count": 5
+          }
+        },
+        {
+          "number": 2,
+          "mcc": 0.03581031889667164,
+          "params": {
+            "shrinkage_m": 172.6346660546817,
+            "min_count": 90
+          }
+        },
+        {
+          "number": 3,
+          "mcc": 0.030371090851045366,
+          "params": {
+            "shrinkage_m": 6.063057692650428,
+            "min_count": 36
+          }
+        },
+        {
+          "number": 4,
+          "mcc": 0.03665243697793039,
+          "params": {
+            "shrinkage_m": 5.981755465821356,
+            "min_count": 212
+          }
+        },
+        {
+          "number": 5,
+          "mcc": 0.03665243697793039,
+          "params": {
+            "shrinkage_m": 273.5192013988159,
+            "min_count": 134
+          }
+        },
+        {
+          "number": 6,
+          "mcc": 0.0328055879195509,
+          "params": {
+            "shrinkage_m": 2.227428649857319,
+            "min_count": 69
+          }
+        },
+        {
+          "number": 7,
+          "mcc": 0.03665243697793039,
+          "params": {
+            "shrinkage_m": 253.7346433644976,
+            "min_count": 173
+          }
+        },
+        {
+          "number": 8,
+          "mcc": 0.045796506776798085,
+          "params": {
+            "shrinkage_m": 2.7617412731649256,
+            "min_count": 13
+          }
+        },
+        {
+          "number": 9,
+          "mcc": 0.03568366271564132,
+          "params": {
+            "shrinkage_m": 16.852183667397583,
+            "min_count": 25
+          }
+        },
+        {
+          "number": 10,
+          "mcc": 0.03268707222092399,
+          "params": {
+            "shrinkage_m": 638.8690527922633,
+            "min_count": 493
+          }
+        },
+        {
+          "number": 11,
+          "mcc": 0.047438715626947854,
+          "params": {
+            "shrinkage_m": 1.7552639426035166,
+            "min_count": 10
+          }
+        },
+        {
+          "number": 12,
+          "mcc": 0.048872235539369854,
+          "params": {
+            "shrinkage_m": 2.24456650573989,
+            "min_count": 6
+          }
+        },
+        {
+          "number": 13,
+          "mcc": 0.04861348058485894,
+          "params": {
+            "shrinkage_m": 1.6975588756627356,
+            "min_count": 5
+          }
+        },
+        {
+          "number": 14,
+          "mcc": 0.04861348058485894,
+          "params": {
+            "shrinkage_m": 16.750386133504588,
+            "min_count": 5
+          }
+        },
+        {
+          "number": 15,
+          "mcc": 0.04861348058485894,
+          "params": {
+            "shrinkage_m": 4.936410767623375,
+            "min_count": 5
+          }
+        },
+        {
+          "number": 16,
+          "mcc": 0.04861348058485894,
+          "params": {
+            "shrinkage_m": 1.0386909950771357,
+            "min_count": 5
+          }
+        },
+        {
+          "number": 17,
+          "mcc": 0.04496544968922923,
+          "params": {
+            "shrinkage_m": 8.400787162239016,
+            "min_count": 11
+          }
+        },
+        {
+          "number": 18,
+          "mcc": 0.03665243697793039,
+          "params": {
+            "shrinkage_m": 62.549204006947086,
+            "min_count": 241
+          }
+        },
+        {
+          "number": 19,
+          "mcc": 0.013364791893844038,
+          "params": {
+            "shrinkage_m": 837.5451234299044,
+            "min_count": 27
+          }
+        }
+      ],
+      "git_commit": "e3b88ad"
+    },
+    "2010": {
+      "params": {
+        "shrinkage_m": 36.263916586957684,
+        "min_count": 246
+      },
+      "mcc": 0.05515544870999318,
+      "default_mcc": 0.009747391075800136,
+      "fit_days": 35368,
+      "tune_days": 5027,
+      "tuning_set": "2009-01-02 to 2009-12-30",
+      "seconds": 0.2,
+      "trials": [
+        {
+          "number": 0,
+          "mcc": 0.009747391075800136,
+          "params": {
+            "shrinkage_m": 100.0,
+            "min_count": 30
+          }
+        },
+        {
+          "number": 1,
+          "mcc": 0.010809395650045153,
+          "params": {
+            "shrinkage_m": 5.252347210004681,
+            "min_count": 23
+          }
+        },
+        {
+          "number": 2,
+          "mcc": 0.031428831144364816,
+          "params": {
+            "shrinkage_m": 17.052682126314703,
+            "min_count": 67
+          }
+        },
+        {
+          "number": 3,
+          "mcc": 0.04290531935975055,
+          "params": {
+            "shrinkage_m": 6.055129579626491,
+            "min_count": 115
+          }
+        },
+        {
+          "number": 4,
+          "mcc": 0.017536327667718492,
+          "params": {
+            "shrinkage_m": 196.04275869478224,
+            "min_count": 12
+          }
+        },
+        {
+          "number": 5,
+          "mcc": 0.014140730955394311,
+          "params": {
+            "shrinkage_m": 95.22750231620465,
+            "min_count": 10
+          }
+        },
+        {
+          "number": 6,
+          "mcc": 0.022780940004783104,
+          "params": {
+            "shrinkage_m": 7.835967103239073,
+            "min_count": 42
+          }
+        },
+        {
+          "number": 7,
+          "mcc": 0.015292198114577766,
+          "params": {
+            "shrinkage_m": 15.818209214336033,
+            "min_count": 14
+          }
+        },
+        {
+          "number": 8,
+          "mcc": 0.014929806568091335,
+          "params": {
+            "shrinkage_m": 5.055195503587606,
+            "min_count": 10
+          }
+        },
+        {
+          "number": 9,
+          "mcc": 0.008079878067924762,
+          "params": {
+            "shrinkage_m": 1.4838778337098075,
+            "min_count": 16
+          }
+        },
+        {
+          "number": 10,
+          "mcc": 0.051798314703407594,
+          "params": {
+            "shrinkage_m": 2.1679981338459307,
+            "min_count": 406
+          }
+        },
+        {
+          "number": 11,
+          "mcc": 0.051798314703407594,
+          "params": {
+            "shrinkage_m": 3.0606008258438546,
+            "min_count": 359
+          }
+        },
+        {
+          "number": 12,
+          "mcc": 0.051798314703407594,
+          "params": {
+            "shrinkage_m": 1.2521817348364273,
+            "min_count": 378
+          }
+        },
+        {
+          "number": 13,
+          "mcc": 0.051798314703407594,
+          "params": {
+            "shrinkage_m": 12.134819165503561,
+            "min_count": 443
+          }
+        },
+        {
+          "number": 14,
+          "mcc": 0.053976615611407985,
+          "params": {
+            "shrinkage_m": 42.70453381840164,
+            "min_count": 291
+          }
+        },
+        {
+          "number": 15,
+          "mcc": 0.051798314703407594,
+          "params": {
+            "shrinkage_m": 128.73781331546934,
+            "min_count": 402
+          }
+        },
+        {
+          "number": 16,
+          "mcc": 0.051798314703407594,
+          "params": {
+            "shrinkage_m": 641.8063626224882,
+            "min_count": 313
+          }
+        },
+        {
+          "number": 17,
+          "mcc": 0.04100577071622139,
+          "params": {
+            "shrinkage_m": 43.32147148255994,
+            "min_count": 125
+          }
+        },
+        {
+          "number": 18,
+          "mcc": 0.036823028181859944,
+          "params": {
+            "shrinkage_m": 2.535329574873353,
+            "min_count": 139
+          }
+        },
+        {
+          "number": 19,
+          "mcc": 0.05515544870999318,
+          "params": {
+            "shrinkage_m": 36.263916586957684,
+            "min_count": 246
+          }
+        }
+      ],
+      "git_commit": "e3b88ad"
+    },
+    "2015": {
+      "params": {
+        "shrinkage_m": 14.56659136579284,
+        "min_count": 197
+      },
+      "mcc": 0.03208216446536499,
+      "default_mcc": 0.008222490822984183,
+      "fit_days": 60573,
+      "tune_days": 5015,
+      "tuning_set": "2014-01-02 to 2014-12-30",
+      "seconds": 0.2,
+      "trials": [
+        {
+          "number": 0,
+          "mcc": 0.008222490822984183,
+          "params": {
+            "shrinkage_m": 100.0,
+            "min_count": 30
+          }
+        },
+        {
+          "number": 1,
+          "mcc": 0.03208216446536499,
+          "params": {
+            "shrinkage_m": 14.56659136579284,
+            "min_count": 197
+          }
+        },
+        {
+          "number": 2,
+          "mcc": -0.008596246093037576,
+          "params": {
+            "shrinkage_m": 120.73567522818657,
+            "min_count": 8
+          }
+        },
+        {
+          "number": 3,
+          "mcc": 0.015704460090453107,
+          "params": {
+            "shrinkage_m": 27.86461826287082,
+            "min_count": 66
+          }
+        },
+        {
+          "number": 4,
+          "mcc": 0.025805181661674975,
+          "params": {
+            "shrinkage_m": 22.746459695345074,
+            "min_count": 347
+          }
+        },
+        {
+          "number": 5,
+          "mcc": -0.013486249570660818,
+          "params": {
+            "shrinkage_m": 37.31838805276978,
+            "min_count": 10
+          }
+        },
+        {
+          "number": 6,
+          "mcc": 0.010446842430615838,
+          "params": {
+            "shrinkage_m": 499.9450470435022,
+            "min_count": 15
+          }
+        },
+        {
+          "number": 7,
+          "mcc": 0.012406496706595684,
+          "params": {
+            "shrinkage_m": 22.060082914489776,
+            "min_count": 59
+          }
+        },
+        {
+          "number": 8,
+          "mcc": 0.023389487616162476,
+          "params": {
+            "shrinkage_m": 393.4317649338893,
+            "min_count": 92
+          }
+        },
+        {
+          "number": 9,
+          "mcc": 0.007076369647263087,
+          "params": {
+            "shrinkage_m": 3.067995629664344,
+            "min_count": 23
+          }
+        },
+        {
+          "number": 10,
+          "mcc": -0.004880611080153347,
+          "params": {
+            "shrinkage_m": 1.4563558054587482,
+            "min_count": 5
+          }
+        },
+        {
+          "number": 11,
+          "mcc": 0.025805181661674975,
+          "params": {
+            "shrinkage_m": 17.386273142486292,
+            "min_count": 348
+          }
+        },
+        {
+          "number": 12,
+          "mcc": 0.03174984462863347,
+          "params": {
+            "shrinkage_m": 3.7512965526780793,
+            "min_count": 203
+          }
+        },
+        {
+          "number": 13,
+          "mcc": 0.025852475693890084,
+          "params": {
+            "shrinkage_m": 4.0709194407209885,
+            "min_count": 105
+          }
+        },
+        {
+          "number": 14,
+          "mcc": 0.025852475693890084,
+          "params": {
+            "shrinkage_m": 2.9946050140632656,
+            "min_count": 107
+          }
+        },
+        {
+          "number": 15,
+          "mcc": 0.025805181661674975,
+          "params": {
+            "shrinkage_m": 1.0769386977566369,
+            "min_count": 303
+          }
+        },
+        {
+          "number": 16,
+          "mcc": 0.03208216446536499,
+          "params": {
+            "shrinkage_m": 8.281943817519002,
+            "min_count": 192
+          }
+        },
+        {
+          "number": 17,
+          "mcc": 0.026674517558196723,
+          "params": {
+            "shrinkage_m": 82.82378630072922,
+            "min_count": 209
+          }
+        },
+        {
+          "number": 18,
+          "mcc": 0.031530778167976475,
+          "params": {
+            "shrinkage_m": 7.994224350976094,
+            "min_count": 226
+          }
+        },
+        {
+          "number": 19,
+          "mcc": 0.0153965998624041,
+          "params": {
+            "shrinkage_m": 87.08936944419787,
+            "min_count": 448
+          }
+        }
+      ],
+      "git_commit": "e3b88ad"
+    },
+    "2020": {
+      "params": {
+        "shrinkage_m": 314.96726423524984,
+        "min_count": 421
+      },
+      "mcc": 0.02506152099844236,
+      "default_mcc": -0.00267586273952978,
+      "fit_days": 85584,
+      "tune_days": 4998,
+      "tuning_set": "2019-01-02 to 2019-12-30",
+      "seconds": 0.2,
+      "trials": [
+        {
+          "number": 0,
+          "mcc": -0.00267586273952978,
+          "params": {
+            "shrinkage_m": 100.0,
+            "min_count": 30
+          }
+        },
+        {
+          "number": 1,
+          "mcc": 0.015779779906141163,
+          "params": {
+            "shrinkage_m": 5.3324896610065755,
+            "min_count": 18
+          }
+        },
+        {
+          "number": 2,
+          "mcc": 0.006986907550033809,
+          "params": {
+            "shrinkage_m": 1.3793375799772256,
+            "min_count": 258
+          }
+        },
+        {
+          "number": 3,
+          "mcc": 0.011738438731687619,
+          "params": {
+            "shrinkage_m": 2.500762225932193,
+            "min_count": 14
+          }
+        },
+        {
+          "number": 4,
+          "mcc": 0.007241673134912476,
+          "params": {
+            "shrinkage_m": 277.02379901719405,
+            "min_count": 111
+          }
+        },
+        {
+          "number": 5,
+          "mcc": 0.006938555391247453,
+          "params": {
+            "shrinkage_m": 16.248610422294888,
+            "min_count": 277
+          }
+        },
+        {
+          "number": 6,
+          "mcc": -0.0008540829158928939,
+          "params": {
+            "shrinkage_m": 17.143507613596977,
+            "min_count": 34
+          }
+        },
+        {
+          "number": 7,
+          "mcc": 0.003873646529048898,
+          "params": {
+            "shrinkage_m": 12.19618311153756,
+            "min_count": 10
+          }
+        },
+        {
+          "number": 8,
+          "mcc": 0.013024325780959424,
+          "params": {
+            "shrinkage_m": 103.11158886783296,
+            "min_count": 480
+          }
+        },
+        {
+          "number": 9,
+          "mcc": 0.005594416879550542,
+          "params": {
+            "shrinkage_m": 118.03618355630117,
+            "min_count": 166
+          }
+        },
+        {
+          "number": 10,
+          "mcc": 0.010507285960582972,
+          "params": {
+            "shrinkage_m": 701.6073101695929,
+            "min_count": 5
+          }
+        },
+        {
+          "number": 11,
+          "mcc": 0.0011559967231471583,
+          "params": {
+            "shrinkage_m": 980.9901168104421,
+            "min_count": 223
+          }
+        },
+        {
+          "number": 12,
+          "mcc": -0.004951706540376077,
+          "params": {
+            "shrinkage_m": 1.2001198738895646,
+            "min_count": 107
+          }
+        },
+        {
+          "number": 13,
+          "mcc": -0.0074057440401411245,
+          "params": {
+            "shrinkage_m": 8.53690712860435,
+            "min_count": 89
+          }
+        },
+        {
+          "number": 14,
+          "mcc": 0.017783944851157057,
+          "params": {
+            "shrinkage_m": 66.01049201940556,
+            "min_count": 382
+          }
+        },
+        {
+          "number": 15,
+          "mcc": -0.011389903304712755,
+          "params": {
+            "shrinkage_m": 84.79168181432601,
+            "min_count": 8
+          }
+        },
+        {
+          "number": 16,
+          "mcc": 0.02506152099844236,
+          "params": {
+            "shrinkage_m": 314.96726423524984,
+            "min_count": 421
+          }
+        },
+        {
+          "number": 17,
+          "mcc": 0.02181424064872928,
+          "params": {
+            "shrinkage_m": 416.96751285664266,
+            "min_count": 403
+          }
+        },
+        {
+          "number": 18,
+          "mcc": 0.013448176773888541,
+          "params": {
+            "shrinkage_m": 554.5967042400193,
+            "min_count": 485
+          }
+        },
+        {
+          "number": 19,
+          "mcc": -0.0010459764776870363,
+          "params": {
+            "shrinkage_m": 484.99161752783857,
+            "min_count": 50
+          }
+        }
+      ],
+      "git_commit": "e3b88ad"
+    }
+  }
+}
