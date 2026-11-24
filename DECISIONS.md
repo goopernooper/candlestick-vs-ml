@@ -247,12 +247,14 @@ Fill in **Decided** during the meeting, update the index, and commit.
 
 ### D-026: Replication of Caginalp & Laurent's patterns
 - **Status:** Decided, 2026-11-09. Decided by: Joshua.
-- **Decision:** Test the eight three-day reversal patterns of Caginalp & Laurent (1998) on our 22 stocks over 2002–2022 (src/replicate_caginalp.py), using TA-Lib's definitions from encoding A.
-  - Trend conditions: none, or a 3-day moving average of closes that fell (rose) over six days before the pattern, in two readings: net change, and every one of the six days.
-  - Holding periods: our next-day target, and buy at the next open and sell at the average of the next three closes, close to their design.
-  - Statistics: their kind of test (binomial, every signal independent), and a t-statistic on date-averaged market-adjusted returns with Newey–West errors (D-005). Signals whose exit falls in the 2023 holdout are excluded.
-- **Why:** Caginalp & Laurent is the strongest published evidence that candlestick patterns predict returns, and Marshall et al. (2006) found the opposite. Testing their patterns directly on our data lets the paper say whether their result holds in 2002–2022. Showing both statistics shows how much treating correlated signals as independent overstates significance.
-- **Caveat:** Their trend rule and holding period are taken from a secondary description (an open-access University of Cape Town thesis), not the paper. Check them against the paper before the results are written up.
+- **Decision:** Repeat the test of Caginalp & Laurent (1998) on our 22 stocks over 2002–2022 (src/replicate_caginalp.py), following the paper's Sections 2.2 and 3, checked against the paper on 2026-11-09.
+  - Patterns: their eight three-day reversal patterns, coded from their own definitions (inequalities between opens and closes, with no size conditions). The same test is also run with TA-Lib's definitions of those patterns (encoding A), with and without their trend rule.
+  - Trend: their Definition 3.1. The 3-day average of closes falls (rises) over six steps, with at most one step against the trend, and the pattern's first day must be in that trend.
+  - Outcome: their statement A1/B1, the close of the pattern's last day against the average of the next three closes, and their return per trade (buy at that close, sell a third at each of the next three closes). Our next-day target is reported too.
+  - Statistics: their Z, which compares the success rate with the rate over all days in the same trend and counts every signal as independent, next to a t-statistic on date-averaged, market-adjusted returns with Newey–West errors (D-005).
+  - Signals whose last price falls in the 2023 holdout are excluded.
+- **Why:** Caginalp & Laurent is the strongest published evidence that candlestick patterns predict returns (Z = 36; 0.9% per bullish trade before costs), and Marshall et al. (2006) found the opposite. Running their test on our data lets the paper say whether the result holds in 2002–2022, and showing both statistics shows how much counting correlated signals as independent overstates significance. The paper itself notes the dependence (its Remark 3.3) and corrects for it only by an assumed factor.
+- **Differences that remain:** 22 large stocks instead of about 500; adjusted prices; two of the paper's printed formulas contain evident typos (the star patterns' midpoint and the last condition of three inside down), and we follow the text. In the paper, "out-of-sample" means the pattern definitions were taken from earlier books, not that the data were split.
 - **Post hoc, descriptive:** It does not affect any model or the main comparison.
 
 ---

@@ -44,16 +44,73 @@ This exercise also shows how little a genuine but rare pattern contributes to th
 
 ### 4.4 Machine learning models
 
-[To be written: random forest, LightGBM, RBF-kernel SVM and a small multilayer perceptron, each trained on encoding A, continuous encoding B (three-day window) and normalized prices, plus the LightGBM ablation on today's return only (Section [X]).]
+Four standard classifiers represent the machine learning side of the comparison: a random forest, gradient-boosted trees (LightGBM), a support vector machine with a radial basis function kernel, and a small multilayer perceptron. They span the main families of general-purpose classifiers: averaged trees, boosted trees, kernel methods and neural networks. The random forest, support vector machine and perceptron come from scikit-learn 1.9.1 (Pedregosa et al., 2011), and gradient boosting from LightGBM 4.7.0 (Ke et al., 2017). Like the pattern-based models, each outputs a probability of an up day, and an up day is predicted when that probability is at least 0.5.
+
+**The model × encoding grid.** Each of the four models is trained separately on each of three inputs, giving twelve models named by model and encoding (for example `svm_b`):
+
+- *Encoding A*: the 61 TA-Lib pattern indicators for day *t* (Section 3.2).
+- *Encoding B*: body, upper wick, lower wick and gap, in ATR units, for days *t*, *t* − 1 and *t* − 2 (12 values; Section 3.3).
+- *Normalized prices*: open, high, low and close relative to the previous close, in ATR units, for the same three days (12 values; Section 3.4).
+
+Encoding B and normalized prices contain exactly the same information, each computable from the other, so comparing them isolates the effect of describing a candle by its shape. Comparing encoding A with either isolates the effect of reducing candles to named patterns. Comparing models within one encoding isolates the effect of the model class.
+
+**Random forest.** A random forest (Breiman, 2001) averages many decision trees, each grown on a bootstrap sample of the training days and choosing each split from a random subset of the features. Its probability of an up day is the average, over trees, of the share of up days in the leaf a test day falls into. We use 300 trees. Next-day direction is a noisy label, so leaves are required to contain many training days; the minimum leaf size and the number of features tried at each split are tuned (Section 4.5).
+
+**Gradient-boosted trees.** LightGBM (Ke et al., 2017) builds trees one after another, each correcting the errors of those before it. Before tuning, it uses 200 trees with 15 leaves each, a learning rate of 0.05, at least 500 training days per leaf, and random subsamples of 80% of the training days and 80% of the features for each tree. These settings are deliberately conservative, for the same reason as the random forest's large leaves.
+
+**Support vector machine.** A support vector machine with a radial basis function kernel (Cortes & Vapnik, 1995) separates up days from down days with a flexible boundary, controlled by the penalty *C* and the kernel width γ. Features are standardized using the mean and standard deviation of the training days, so that the test year cannot affect the scaling. Two adaptations were needed.
+
+First, training time grows roughly with the square of the number of training days, and on data this noisy nearly all training days become support vectors. A full training window of up to about 100,000 stock-days would take on the order of ten minutes per fit, which is impractical across 18 folds, three encodings and the tuning budget. Each support vector machine is therefore trained on a random sample of at most 20,000 training days, drawn with a fixed seed from the whole training window, so that the sample covers all the market conditions the other models see. Windows smaller than this (the 2005 fold has 15,166 labelled days) are used in full. The cap was fixed before any support vector machine results were produced. Because it means these models see fewer days than the others in later folds, it works against them.
+
+Second, a support vector machine produces a signed distance from its decision boundary rather than a probability. We use the logistic function of this distance as the model's score. The score is above 0.5 exactly when the model predicts an up day, and it ranks days by their distance from the boundary, which is all that classification and the coverage analysis require. It is not a calibrated probability. We do not use scikit-learn's built-in calibration, which fits five additional models by internal cross-validation and can disagree with the model's own predictions.
+
+**Multilayer perceptron.** The neural network has two hidden layers of 32 and 16 units with ReLU activations and is trained with the Adam optimizer (Kingma & Ba, 2015) in batches of 512 days, with an L2 penalty on the weights. Training stops when accuracy on a random 10% of the training days has not improved for ten passes through the data, or after 200 passes. Features are standardized on the training days, as for the support vector machine. We keep the network small because the signal is weak, and larger networks would mainly add capacity to fit noise. Deeper sequence models are left to future work.
+
+**Today's-return ablation.** Results during development showed a short-term reversal effect: the previous-day baseline was below chance in most years (Section 6.2). To test whether the candle-based models do more than detect reversal, LightGBM is also trained on a single feature, day *t*'s close-to-close return in ATR units. If this one-feature model performed as well as the models given full candles, any apparent candlestick signal would reduce to reversal. This model was added after the development results were seen, and we report it as a post hoc analysis.
+
+**Reproducibility.** Every model that uses randomness is seeded with the project seed plus the test year, so each fold is reproducible while folds differ from one another. LightGBM runs with a fixed number of threads, and the random forest averages its trees' predictions on a single thread, because otherwise the order in which results are added can change predictions in the last decimal places. Repeated runs give identical results.
 
 ### 4.5 Hyperparameter tuning
 
-Hyperparameters are tuned inside each training window, as described in Section 5.3: each candidate setting is fitted on all but the last year of the window and scored by MCC on that last year. Every model family, the pattern-based models included, receives the same budget of 20 trials with Optuna (Akiba et al., 2019), so that differences between families reflect the model class rather than the effort spent tuning it. Settings are re-tuned in the folds beginning 2005, 2010, 2015 and 2020, and the folds in between reuse the most recent settings. The search ranges are listed in Table [X]. [To be completed when tuning is implemented: search ranges for *m*, *n*ₘᵢₙ and *k*, and for the machine learning models.]
+Hyperparameters are tuned inside each training window, as described in Section 5.3: each candidate setting is fitted on all but the last year of the window and scored by MCC on that last year, with the same one-day purge between the two. Every model family, the pattern-based models included, receives the same budget of 20 trials, chosen with Optuna's tree-structured Parzen estimator (Akiba et al., 2019; Bergstra et al., 2011), so that differences between families reflect the model class rather than the effort spent tuning it. The first trial is always the family's starting settings (Sections 4.1, 4.2 and 4.4), so tuning never chooses settings that did worse than these on the tuning year. The best settings are refitted on the whole training window before the test year is predicted.
+
+Settings are re-tuned in the folds beginning 2005, 2010, 2015 and 2020, and the folds in between reuse the most recent settings. Each model is tuned separately on its own encoding, so that, for example, LightGBM on encoding A and on encoding B may use different settings. The search ranges are listed in Table 3. The baselines have nothing to tune, and the k-NN window length and the pattern miner's maximum context length are not tuned, because they define separate models.
+
+**Table 3. Hyperparameter search ranges** (log scale unless stated)
+
+| Model | Hyperparameter | Range |
+|---|---|---|
+| LightGBM | number of trees | 50–500 |
+| | learning rate | 0.01–0.2 |
+| | leaves per tree | 4–64 |
+| | minimum training days per leaf | 50–2,000 |
+| | share of features per tree | 0.5–1.0 (linear) |
+| | L2 penalty | 0.001–10 |
+| Random forest | minimum training days per leaf | 50–2,000 |
+| | features tried per split | √*p*, 25%, 50% or 100% of *p* |
+| Support vector machine | penalty *C* | 0.01–100 |
+| | kernel width γ | 0.001–1 |
+| Multilayer perceptron | hidden layers | (16), (32, 16) or (64, 32) |
+| | L2 penalty | 10⁻⁵–0.1 |
+| | initial learning rate | 10⁻⁴–0.01 |
+| k-nearest neighbours | *k* | 10–1,000 |
+| Pattern miner | shrinkage weight *m* | 1–1,000 |
+| | minimum count *n*ₘᵢₙ | 5–500 |
+
+*p* is the number of input features.
+
+A tuning year has about 5,000 labelled stock-days, so MCC measured on it has a standard error of roughly 0.014, comparable to the differences between settings. Tuning therefore cannot reliably find the best settings; it mainly protects each model family from being judged on poorly chosen ones. The development results bear this out. Across the 64 tuning runs (16 models × 4 retune years), the chosen settings averaged an MCC of 0.039 on their tuning years, against 0.021 for the starting settings. Yet test-year performance changed far less, in both directions. LightGBM on encoding B rose from an MCC of 0.022 with its starting settings to 0.030 when tuned, while LightGBM on encoding A fell from 0.021 to 0.019 and k-NN on three days from 0.019 to 0.017. The chosen settings also varied widely from one retune year to the next. For k-NN on three days, *k* was 717, 953, 49 and 944. For the pattern miner, *m* ranged from 2 to 315. This pattern is what tuning on a weak, noisy signal would be expected to produce, and it is the reason all comparisons in this paper are made on test years that played no part in tuning.
 
 ### References for this section
 
 - Akiba, T., Sano, S., Yanase, T., Ohta, T., & Koyama, M. (2019). Optuna: A next-generation hyperparameter optimization framework. In *Proceedings of the 25th ACM SIGKDD International Conference on Knowledge Discovery & Data Mining* (pp. 2623–2631).
 - Begleiter, R., El-Yaniv, R., & Yona, G. (2004). On prediction using variable order Markov models. *Journal of Artificial Intelligence Research*, 22, 385–421.
+- Bergstra, J., Bardenet, R., Bengio, Y., & Kégl, B. (2011). Algorithms for hyper-parameter optimization. In *Advances in Neural Information Processing Systems 24* (pp. 2546–2554).
+- Breiman, L. (2001). Random forests. *Machine Learning*, 45(1), 5–32.
 - Cestnik, B. (1990). Estimating probabilities: A crucial task in machine learning. In *Proceedings of the 9th European Conference on Artificial Intelligence* (pp. 147–149).
+- Cortes, C., & Vapnik, V. (1995). Support-vector networks. *Machine Learning*, 20(3), 273–297.
 - Cover, T., & Hart, P. (1967). Nearest neighbor pattern classification. *IEEE Transactions on Information Theory*, 13(1), 21–27.
 - Katz, S. M. (1987). Estimation of probabilities from sparse data for the language model component of a speech recognizer. *IEEE Transactions on Acoustics, Speech, and Signal Processing*, 35(3), 400–401.
+- Ke, G., Meng, Q., Finley, T., Wang, T., Chen, W., Ma, W., Ye, Q., & Liu, T.-Y. (2017). LightGBM: A highly efficient gradient boosting decision tree. In *Advances in Neural Information Processing Systems 30* (pp. 3146–3154).
+- Kingma, D. P., & Ba, J. (2015). Adam: A method for stochastic optimization. In *Proceedings of the 3rd International Conference on Learning Representations*.
+- Pedregosa, F., Varoquaux, G., Gramfort, A., Michel, V., Thirion, B., Grisel, O., et al. (2011). Scikit-learn: Machine learning in Python. *Journal of Machine Learning Research*, 12, 2825–2830.
