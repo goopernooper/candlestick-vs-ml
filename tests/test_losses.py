@@ -76,7 +76,8 @@ def test_losses_agree_with_the_headline_metrics():
 
 def test_write_losses(tmp_path):
     names = write_losses(random_preds(days=50), tmp_path)
-    assert names == ["losses_classification.csv", "losses_misclassification.csv", "losses_economic.csv"]
+    assert names == ["losses_classification.csv", "losses_misclassification.csv", "losses_economic.csv",
+                     "losses_economic_long_flat.csv"]
     for name in names:
         t = pd.read_csv(tmp_path / name, index_col="date", parse_dates=True)
         assert list(t.columns) == ["a", "b"] and len(t) == 50

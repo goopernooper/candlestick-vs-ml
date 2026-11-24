@@ -39,8 +39,9 @@ Days on which every stock is in the dead zone have no labelled stock-day and
 are left empty in the classification tables.
 
 Writes results/<version>/losses_classification.csv (balanced; used by the
-tests), losses_misclassification.csv and losses_economic.csv: one row per test
-day, one column per model.
+tests), losses_misclassification.csv, losses_economic.csv and
+losses_economic_long_flat.csv (the same for the long/flat strategy, for the
+comparison with buy-and-hold): one row per test day, one column per model.
 """
 from __future__ import annotations
 
@@ -102,7 +103,9 @@ def write_losses(preds: pd.DataFrame, folder: Path, cost_bps: float | None = Non
     classification_losses(preds).to_csv(folder / "losses_classification.csv")
     classification_losses(preds, balanced=False).to_csv(folder / "losses_misclassification.csv")
     economic_losses(preds, cost_bps=cost_bps).to_csv(folder / "losses_economic.csv")
-    return ["losses_classification.csv", "losses_misclassification.csv", "losses_economic.csv"]
+    economic_losses(preds, "long_flat", cost_bps=cost_bps).to_csv(folder / "losses_economic_long_flat.csv")
+    return ["losses_classification.csv", "losses_misclassification.csv", "losses_economic.csv",
+            "losses_economic_long_flat.csv"]
 
 
 def main() -> int:
@@ -117,7 +120,7 @@ def main() -> int:
         return 1
     preds = pd.read_parquet(path)
     names = write_losses(preds, folder)
-    c, m, e = (pd.read_csv(folder / n, index_col=0) for n in names)
+    c, m, e = (pd.read_csv(folder / n, index_col=0) for n in names[:3])
     summary = pd.DataFrame({"balanced_loss": c.mean(), "plain_misclassification": m.mean(),
                             "economic_loss_bps": e.mean() * 1e4})
     print(f"{len(c)} test days, {c.shape[1]} models. Mean daily losses (lower is better; the tests use "

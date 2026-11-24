@@ -181,3 +181,13 @@ tuning:
     pattern_miner:
       shrinkage_m: {type: float, low: 1.0, high: 1000.0, log: true}
       min_count: {type: int, low: 5, high: 500, log: true}
+
+significance:
+  # Statistical tests (ANALYSIS_PLAN.md sections 8-9; src/significance.py).
+  alpha: 0.05               # Diebold-Mariano tests, two-sided
+  mcs_size: 0.10            # Model Confidence Set at 90%
+  reps: 10000               # bootstrap replications (MCS and SPA)
+  block_size: 20            # mean block length of the stationary bootstrap, trading days
+  economic_benchmark: always_long
+  # the classification benchmark is the baseline with the highest pooled MCC
+  baselines: [majority, always_long, previous_day, random, reversal]

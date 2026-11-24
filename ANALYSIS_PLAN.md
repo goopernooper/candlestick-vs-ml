@@ -115,8 +115,10 @@ Daily losses are averaged across the 22 stocks before testing, because the stock
 
    Both are written by every run to `results/<version>/losses_classification.csv` and `losses_economic.csv` (src/losses.py), one row per test day and one column per model, together with the plain share misclassified (`losses_misclassification.csv`), which is reported for reference but not tested. A day on which every stock is in the dead zone has no classification loss.
 2. **Diebold–Mariano tests** on the difference in daily loss between two models: a regression on a constant with Newey–West standard errors, lag = ⌊4(T/100)^(2/9)⌋. Two-sided, α = 0.05.
-3. **Model Confidence Set** (`arch.bootstrap.MCS`): all models, both loss series, 90% confidence, 10,000 block-bootstrap replications.
-4. **SPA test** (`arch.bootstrap.SPA`): does any model beat the benchmark? Benchmarks: always-long for the economic loss; the strongest baseline for the classification loss.
+3. **Model Confidence Set** (`arch.bootstrap.MCS`, range statistic): all models, both loss series, 90% confidence, 10,000 stationary block-bootstrap replications with mean block length 20 trading days (the same block length as the confidence intervals in item 5). Models with identical loss series (majority and always-long) enter once.
+4. **SPA test** (`arch.bootstrap.SPA`, studentized, consistent p-value): does any model beat the benchmark? Benchmarks: always-long for the economic losses (long/short, and long/flat for the buy-and-hold claim); the strongest baseline for the classification loss. Same bootstrap as the Model Confidence Set.
+
+   Items 2–4 and the verdicts of section 9 are computed by `python src/significance.py <version>` (settings in `config.yaml`, significance) and written to `results/<version>/significance_*.csv`.
 5. **Confidence intervals** for MCC, accuracy and Sharpe: stationary block bootstrap over dates (all stocks kept together on each date), mean block length 20 trading days, 10,000 replications.
 
 ## 9. What counts as beating a baseline
