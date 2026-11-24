@@ -119,7 +119,7 @@ Daily losses are averaged across the 22 stocks before testing, because the stock
 4. **SPA test** (`arch.bootstrap.SPA`, studentized, consistent p-value): does any model beat the benchmark? Benchmarks: always-long for the economic losses (long/short, and long/flat for the buy-and-hold claim); the strongest baseline for the classification loss. Same bootstrap as the Model Confidence Set.
 
    Items 2–4 and the verdicts of section 9 are computed by `python src/significance.py <version>` (settings in `config.yaml`, significance) and written to `results/<version>/significance_*.csv`.
-5. **Confidence intervals** for MCC, accuracy and Sharpe: stationary block bootstrap over dates (all stocks kept together on each date), mean block length 20 trading days, 10,000 replications.
+5. **Confidence intervals** for MCC, accuracy and Sharpe: stationary block bootstrap over dates (all stocks kept together on each date), mean block length 20 trading days, 10,000 replications. 95% percentile intervals, for each model's MCC, accuracy, balanced accuracy and long/short and long/flat Sharpe ratio at 5 bps, and for each model's MCC minus the strongest baseline's and long/short Sharpe minus always-long's (the same resampled dates for every model). Computed by `python src/bootstrap_ci.py <version>` and written to `results/<version>/confidence_intervals.csv`.
 
 ## 9. What counts as beating a baseline
 
