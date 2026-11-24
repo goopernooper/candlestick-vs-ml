@@ -100,7 +100,7 @@ Models are named `model_encoding` (for example `lightgbm_a`, `svm_ohlc`). All mo
 - long/short (primary) and long/flat (compared against buy-and-hold)
 - Sharpe ratio (no risk-free rate) at 5 bps per side
 - annualized return, maximum drawdown, turnover
-- **break-even cost:** the cost per side at which annual long/short return reaches zero
+- **break-even cost:** the cost per side at which the compounded annual net return reaches zero, for long/short and long/flat, found exactly from the daily gross returns and turnover (`results/<version>/break_even.csv`, src/break_even.py)
 - **market exposure:** each strategy's daily net return regressed on the equal-weight return of the 22 stocks, giving beta, annualized alpha with a Newey–West t-statistic, the information ratio and the average net exposure. **Post hoc** (D-025), descriptive.
 
 **Cost grid:** 0, 1, 2, 5, 10, 20 bps per side. Headline: 5 bps (D-013).

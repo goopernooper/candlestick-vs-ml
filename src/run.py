@@ -43,6 +43,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from dataset import build_table  # noqa: E402
 from evaluate import backtest, summarize  # noqa: E402
 from exposure import exposure_table  # noqa: E402
+from break_even import break_even_table  # noqa: E402
 from losses import write_losses  # noqa: E402
 from features import (PATTERNS, load_config, ohlc_window_columns, pattern_column,  # noqa: E402
                       symbol_window_columns, window_columns)
@@ -268,9 +269,10 @@ def main() -> int:
     backtest(preds, costs_bps=cfg["backtest"]["cost_grid_bps"]).assign(git_commit=stamp).to_csv(out / "backtest.csv", index=False)
     exposure = exposure_table(preds, cost_bps=cost)
     exposure.assign(git_commit=stamp).to_csv(out / "exposure.csv", index=False)
+    break_even_table(preds).assign(git_commit=stamp).to_csv(out / "break_even.csv", index=False)
     preds.to_parquet(out / "predictions.parquet")
     written = ["summary.csv", "metrics_by_year.csv", "metrics_by_stock.csv", "backtest.csv",
-               "exposure.csv", *write_losses(preds, out, cost_bps=cost),
+               "exposure.csv", *write_losses(preds, out, cost_bps=cost), "break_even.csv",
                "run_info.json", "predictions.parquet"]
     if tuned:
         settings_table(tuned).assign(git_commit=stamp).to_csv(out / "tuned_settings.csv", index=False)
