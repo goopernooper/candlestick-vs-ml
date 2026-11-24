@@ -1,0 +1,1088 @@
+{
+  "model": "mlp_ohlc",
+  "family": "mlp",
+  "setup": {
+    "space": {
+      "hidden_layer_sizes": {
+        "type": "categorical",
+        "choices": [
+          [
+            16
+          ],
+          [
+            32,
+            16
+          ],
+          [
+            64,
+            32
+          ]
+        ]
+      },
+      "alpha": {
+        "type": "float",
+        "low": 1e-05,
+        "high": 0.1,
+        "log": true
+      },
+      "learning_rate_init": {
+        "type": "float",
+        "low": 0.0001,
+        "high": 0.01,
+        "log": true
+      }
+    },
+    "n_trials": 20,
+    "seed": 20261016,
+    "model_settings": {
+      "hidden_layer_sizes": [
+        32,
+        16
+      ],
+      "alpha": 0.001,
+      "learning_rate_init": 0.001,
+      "batch_size": 512,
+      "max_iter": 200,
+      "early_stopping": true,
+      "validation_fraction": 0.1,
+      "n_iter_no_change": 10
+    },
+    "tuning_years": 1,
+    "labels": {
+      "horizon": 1,
+      "dead_zone_k": 0.1,
+      "vol_window": 20
+    },
+    "features": [
+      "n_open",
+      "n_high",
+      "n_low",
+      "n_close",
+      "n_open_lag1",
+      "n_high_lag1",
+      "n_low_lag1",
+      "n_close_lag1",
+      "n_open_lag2",
+      "n_high_lag2",
+      "n_low_lag2",
+      "n_close_lag2"
+    ]
+  },
+  "years": {
+    "2005": {
+      "params": {
+        "hidden_layer_sizes": [
+          32,
+          16
+        ],
+        "alpha": 0.04300298772676004,
+        "learning_rate_init": 0.004224658976077245
+      },
+      "mcc": 0.05433122490318417,
+      "default_mcc": 0.03741140792450538,
+      "fit_days": 10088,
+      "tune_days": 5058,
+      "tuning_set": "2004-01-02 to 2004-12-30",
+      "seconds": 2.9,
+      "trials": [
+        {
+          "number": 0,
+          "mcc": 0.03741140792450538,
+          "params": {
+            "hidden_layer_sizes": [
+              32,
+              16
+            ],
+            "alpha": 0.001,
+            "learning_rate_init": 0.001
+          }
+        },
+        {
+          "number": 1,
+          "mcc": 0.031602986595080144,
+          "params": {
+            "hidden_layer_sizes": [
+              16
+            ],
+            "alpha": 0.0034766294600192824,
+            "learning_rate_init": 0.0003325021571364986
+          }
+        },
+        {
+          "number": 2,
+          "mcc": 0.03476993232886692,
+          "params": {
+            "hidden_layer_sizes": [
+              64,
+              32
+            ],
+            "alpha": 0.017754853493960908,
+            "learning_rate_init": 0.002752554448306641
+          }
+        },
+        {
+          "number": 3,
+          "mcc": 0.014077734550734926,
+          "params": {
+            "hidden_layer_sizes": [
+              64,
+              32
+            ],
+            "alpha": 0.012481945619209126,
+            "learning_rate_init": 0.00019684391477415065
+          }
+        },
+        {
+          "number": 4,
+          "mcc": 0.04175523943652217,
+          "params": {
+            "hidden_layer_sizes": [
+              32,
+              16
+            ],
+            "alpha": 0.006251093329423017,
+            "learning_rate_init": 0.0098960930485964
+          }
+        },
+        {
+          "number": 5,
+          "mcc": 0.039486002716209855,
+          "params": {
+            "hidden_layer_sizes": [
+              16
+            ],
+            "alpha": 0.035677570844049156,
+            "learning_rate_init": 0.0056232445147676125
+          }
+        },
+        {
+          "number": 6,
+          "mcc": 0.03910176132480146,
+          "params": {
+            "hidden_layer_sizes": [
+              16
+            ],
+            "alpha": 0.013476222917841136,
+            "learning_rate_init": 0.0058839920305169885
+          }
+        },
+        {
+          "number": 7,
+          "mcc": 0.03610180096829099,
+          "params": {
+            "hidden_layer_sizes": [
+              32,
+              16
+            ],
+            "alpha": 0.0002285907870511682,
+            "learning_rate_init": 0.00045793051422153433
+          }
+        },
+        {
+          "number": 8,
+          "mcc": 0.014539665266583563,
+          "params": {
+            "hidden_layer_sizes": [
+              64,
+              32
+            ],
+            "alpha": 0.09793553628516012,
+            "learning_rate_init": 0.00011688957913856196
+          }
+        },
+        {
+          "number": 9,
+          "mcc": 0.030834639365289494,
+          "params": {
+            "hidden_layer_sizes": [
+              64,
+              32
+            ],
+            "alpha": 0.01121232858972689,
+            "learning_rate_init": 0.0024844842647577005
+          }
+        },
+        {
+          "number": 10,
+          "mcc": 0.03140535489866163,
+          "params": {
+            "hidden_layer_sizes": [
+              32,
+              16
+            ],
+            "alpha": 0.0002938062119992369,
+            "learning_rate_init": 0.007805864266877934
+          }
+        },
+        {
+          "number": 11,
+          "mcc": 0.05433122490318417,
+          "params": {
+            "hidden_layer_sizes": [
+              32,
+              16
+            ],
+            "alpha": 0.04300298772676004,
+            "learning_rate_init": 0.004224658976077245
+          }
+        },
+        {
+          "number": 12,
+          "mcc": 0.05015996142856513,
+          "params": {
+            "hidden_layer_sizes": [
+              32,
+              16
+            ],
+            "alpha": 0.07663470094283344,
+            "learning_rate_init": 0.0036954597666869642
+          }
+        },
+        {
+          "number": 13,
+          "mcc": 0.034137138351551646,
+          "params": {
+            "hidden_layer_sizes": [
+              32,
+              16
+            ],
+            "alpha": 0.09612531169739644,
+            "learning_rate_init": 0.00488581947010712
+          }
+        },
+        {
+          "number": 14,
+          "mcc": 0.04264198318203932,
+          "params": {
+            "hidden_layer_sizes": [
+              32,
+              16
+            ],
+            "alpha": 0.027713835416348784,
+            "learning_rate_init": 0.001192326551227979
+          }
+        },
+        {
+          "number": 15,
+          "mcc": 0.041040670917087525,
+          "params": {
+            "hidden_layer_sizes": [
+              64,
+              32
+            ],
+            "alpha": 0.001320726011541015,
+            "learning_rate_init": 0.00317608774897982
+          }
+        },
+        {
+          "number": 16,
+          "mcc": 0.02085970782444151,
+          "params": {
+            "hidden_layer_sizes": [
+              64,
+              32
+            ],
+            "alpha": 0.049483495899317366,
+            "learning_rate_init": 0.008802308352500858
+          }
+        },
+        {
+          "number": 17,
+          "mcc": 0.05219994316732677,
+          "params": {
+            "hidden_layer_sizes": [
+              32,
+              16
+            ],
+            "alpha": 0.005117286252641735,
+            "learning_rate_init": 0.0028879261044993747
+          }
+        },
+        {
+          "number": 18,
+          "mcc": 0.032170743772297894,
+          "params": {
+            "hidden_layer_sizes": [
+              32,
+              16
+            ],
+            "alpha": 0.08726980193791856,
+            "learning_rate_init": 0.0014699612989749712
+          }
+        },
+        {
+          "number": 19,
+          "mcc": 0.043290113392827546,
+          "params": {
+            "hidden_layer_sizes": [
+              32,
+              16
+            ],
+            "alpha": 0.007486470005605194,
+            "learning_rate_init": 0.00174660287284634
+          }
+        }
+      ],
+      "git_commit": "2a284b5"
+    },
+    "2010": {
+      "params": {
+        "hidden_layer_sizes": [
+          32,
+          16
+        ],
+        "alpha": 0.0005458414110084364,
+        "learning_rate_init": 0.00012523591974850318
+      },
+      "mcc": 0.05774971403872289,
+      "default_mcc": 0.042653550301540805,
+      "fit_days": 35368,
+      "tune_days": 5027,
+      "tuning_set": "2009-01-02 to 2009-12-30",
+      "seconds": 9.0,
+      "trials": [
+        {
+          "number": 0,
+          "mcc": 0.042653550301540805,
+          "params": {
+            "hidden_layer_sizes": [
+              32,
+              16
+            ],
+            "alpha": 0.001,
+            "learning_rate_init": 0.001
+          }
+        },
+        {
+          "number": 1,
+          "mcc": 0.029338901433101732,
+          "params": {
+            "hidden_layer_sizes": [
+              64,
+              32
+            ],
+            "alpha": 0.001961094100384926,
+            "learning_rate_init": 0.00033221223856715667
+          }
+        },
+        {
+          "number": 2,
+          "mcc": 0.05415035325648165,
+          "params": {
+            "hidden_layer_sizes": [
+              32,
+              16
+            ],
+            "alpha": 0.004348603970549541,
+            "learning_rate_init": 0.00021921441391648162
+          }
+        },
+        {
+          "number": 3,
+          "mcc": 0.04607026728830048,
+          "params": {
+            "hidden_layer_sizes": [
+              32,
+              16
+            ],
+            "alpha": 9.454868997582114e-05,
+            "learning_rate_init": 0.0002945497356993232
+          }
+        },
+        {
+          "number": 4,
+          "mcc": 0.023684221210394277,
+          "params": {
+            "hidden_layer_sizes": [
+              64,
+              32
+            ],
+            "alpha": 1.2308950492056921e-05,
+            "learning_rate_init": 0.0025368110243081
+          }
+        },
+        {
+          "number": 5,
+          "mcc": 0.03012269394442918,
+          "params": {
+            "hidden_layer_sizes": [
+              64,
+              32
+            ],
+            "alpha": 0.00021018573649684945,
+            "learning_rate_init": 0.006143666046489158
+          }
+        },
+        {
+          "number": 6,
+          "mcc": 0.05383712463467185,
+          "params": {
+            "hidden_layer_sizes": [
+              32,
+              16
+            ],
+            "alpha": 0.00422701971266729,
+            "learning_rate_init": 0.005950308124680329
+          }
+        },
+        {
+          "number": 7,
+          "mcc": 0.04029207141267416,
+          "params": {
+            "hidden_layer_sizes": [
+              64,
+              32
+            ],
+            "alpha": 0.009132190830284414,
+            "learning_rate_init": 0.004135041563140234
+          }
+        },
+        {
+          "number": 8,
+          "mcc": 0.03827857444177535,
+          "params": {
+            "hidden_layer_sizes": [
+              32,
+              16
+            ],
+            "alpha": 0.00015887846861542163,
+            "learning_rate_init": 0.0014513720490946203
+          }
+        },
+        {
+          "number": 9,
+          "mcc": 0.05259077816898904,
+          "params": {
+            "hidden_layer_sizes": [
+              16
+            ],
+            "alpha": 0.0006822833021191713,
+            "learning_rate_init": 0.000307737516916214
+          }
+        },
+        {
+          "number": 10,
+          "mcc": 0.05190874707905558,
+          "params": {
+            "hidden_layer_sizes": [
+              32,
+              16
+            ],
+            "alpha": 0.06465650068506823,
+            "learning_rate_init": 0.00015052334866540808
+          }
+        },
+        {
+          "number": 11,
+          "mcc": 0.043383297518824,
+          "params": {
+            "hidden_layer_sizes": [
+              32,
+              16
+            ],
+            "alpha": 0.05958299820121083,
+            "learning_rate_init": 0.005163530930058334
+          }
+        },
+        {
+          "number": 12,
+          "mcc": 0.033366804936413405,
+          "params": {
+            "hidden_layer_sizes": [
+              32,
+              16
+            ],
+            "alpha": 0.007729210551475666,
+            "learning_rate_init": 0.001685944282938988
+          }
+        },
+        {
+          "number": 13,
+          "mcc": 0.028310074900017218,
+          "params": {
+            "hidden_layer_sizes": [
+              32,
+              16
+            ],
+            "alpha": 2.0366282555993845e-05,
+            "learning_rate_init": 0.00689954544386231
+          }
+        },
+        {
+          "number": 14,
+          "mcc": 0.05311844716339291,
+          "params": {
+            "hidden_layer_sizes": [
+              32,
+              16
+            ],
+            "alpha": 0.009197920286959323,
+            "learning_rate_init": 0.00025733458685681863
+          }
+        },
+        {
+          "number": 15,
+          "mcc": 0.031176245499186978,
+          "params": {
+            "hidden_layer_sizes": [
+              32,
+              16
+            ],
+            "alpha": 0.006109602937641415,
+            "learning_rate_init": 0.009049508352348558
+          }
+        },
+        {
+          "number": 16,
+          "mcc": 0.05389908459687529,
+          "params": {
+            "hidden_layer_sizes": [
+              16
+            ],
+            "alpha": 0.03886071789119718,
+            "learning_rate_init": 0.001258492845358089
+          }
+        },
+        {
+          "number": 17,
+          "mcc": 0.05063960097659896,
+          "params": {
+            "hidden_layer_sizes": [
+              16
+            ],
+            "alpha": 0.08316393759807689,
+            "learning_rate_init": 0.0012100333305468708
+          }
+        },
+        {
+          "number": 18,
+          "mcc": 0.05248674448253361,
+          "params": {
+            "hidden_layer_sizes": [
+              16
+            ],
+            "alpha": 0.018992250116320657,
+            "learning_rate_init": 0.000682934188039953
+          }
+        },
+        {
+          "number": 19,
+          "mcc": 0.05774971403872289,
+          "params": {
+            "hidden_layer_sizes": [
+              32,
+              16
+            ],
+            "alpha": 0.0005458414110084364,
+            "learning_rate_init": 0.00012523591974850318
+          }
+        }
+      ],
+      "git_commit": "2a284b5"
+    },
+    "2015": {
+      "params": {
+        "hidden_layer_sizes": [
+          64,
+          32
+        ],
+        "alpha": 4.577148515882099e-05,
+        "learning_rate_init": 0.004569262220472582
+      },
+      "mcc": 0.047012110030084694,
+      "default_mcc": 0.027016029534619804,
+      "fit_days": 60573,
+      "tune_days": 5015,
+      "tuning_set": "2014-01-02 to 2014-12-30",
+      "seconds": 22.9,
+      "trials": [
+        {
+          "number": 0,
+          "mcc": 0.027016029534619804,
+          "params": {
+            "hidden_layer_sizes": [
+              32,
+              16
+            ],
+            "alpha": 0.001,
+            "learning_rate_init": 0.001
+          }
+        },
+        {
+          "number": 1,
+          "mcc": 0.03569313236699822,
+          "params": {
+            "hidden_layer_sizes": [
+              32,
+              16
+            ],
+            "alpha": 2.9176331597671386e-05,
+            "learning_rate_init": 0.0009191126253611833
+          }
+        },
+        {
+          "number": 2,
+          "mcc": 0.007842495743923567,
+          "params": {
+            "hidden_layer_sizes": [
+              64,
+              32
+            ],
+            "alpha": 0.0012470881958601989,
+            "learning_rate_init": 0.00020819928441103653
+          }
+        },
+        {
+          "number": 3,
+          "mcc": 0.034402624825590894,
+          "params": {
+            "hidden_layer_sizes": [
+              16
+            ],
+            "alpha": 0.0015172288594201139,
+            "learning_rate_init": 0.005369241612814911
+          }
+        },
+        {
+          "number": 4,
+          "mcc": 0.02298095380943288,
+          "params": {
+            "hidden_layer_sizes": [
+              16
+            ],
+            "alpha": 0.008285159232946019,
+            "learning_rate_init": 0.00011928505547442457
+          }
+        },
+        {
+          "number": 5,
+          "mcc": 0.009571609581231082,
+          "params": {
+            "hidden_layer_sizes": [
+              64,
+              32
+            ],
+            "alpha": 0.00038182643697816187,
+            "learning_rate_init": 0.0001506320709256855
+          }
+        },
+        {
+          "number": 6,
+          "mcc": 0.020336511381634715,
+          "params": {
+            "hidden_layer_sizes": [
+              32,
+              16
+            ],
+            "alpha": 0.04207402994489848,
+            "learning_rate_init": 0.0029275780953898645
+          }
+        },
+        {
+          "number": 7,
+          "mcc": 0.023698976112386957,
+          "params": {
+            "hidden_layer_sizes": [
+              16
+            ],
+            "alpha": 0.0006250862338178691,
+            "learning_rate_init": 0.00011590215060635409
+          }
+        },
+        {
+          "number": 8,
+          "mcc": 0.014499697648388356,
+          "params": {
+            "hidden_layer_sizes": [
+              32,
+              16
+            ],
+            "alpha": 0.0011283644678562602,
+            "learning_rate_init": 0.0018146011059594971
+          }
+        },
+        {
+          "number": 9,
+          "mcc": 0.024098305713258515,
+          "params": {
+            "hidden_layer_sizes": [
+              16
+            ],
+            "alpha": 1.1043428208353698e-05,
+            "learning_rate_init": 0.00040759311098939615
+          }
+        },
+        {
+          "number": 10,
+          "mcc": 0.02742261502279954,
+          "params": {
+            "hidden_layer_sizes": [
+              32,
+              16
+            ],
+            "alpha": 2.342208922267859e-05,
+            "learning_rate_init": 0.0033726064917669087
+          }
+        },
+        {
+          "number": 11,
+          "mcc": 0.023292468939434745,
+          "params": {
+            "hidden_layer_sizes": [
+              16
+            ],
+            "alpha": 0.00018351645057708725,
+            "learning_rate_init": 0.0016359719703528705
+          }
+        },
+        {
+          "number": 12,
+          "mcc": 0.03858525640075625,
+          "params": {
+            "hidden_layer_sizes": [
+              64,
+              32
+            ],
+            "alpha": 2.2269118410277517e-05,
+            "learning_rate_init": 0.008404450938180878
+          }
+        },
+        {
+          "number": 13,
+          "mcc": 0.047012110030084694,
+          "params": {
+            "hidden_layer_sizes": [
+              64,
+              32
+            ],
+            "alpha": 4.577148515882099e-05,
+            "learning_rate_init": 0.004569262220472582
+          }
+        },
+        {
+          "number": 14,
+          "mcc": 0.029622636921055333,
+          "params": {
+            "hidden_layer_sizes": [
+              64,
+              32
+            ],
+            "alpha": 2.0416310277537542e-05,
+            "learning_rate_init": 0.007095680703713487
+          }
+        },
+        {
+          "number": 15,
+          "mcc": 0.033962653793544004,
+          "params": {
+            "hidden_layer_sizes": [
+              64,
+              32
+            ],
+            "alpha": 0.00013844315777958977,
+            "learning_rate_init": 0.005736357032491583
+          }
+        },
+        {
+          "number": 16,
+          "mcc": 0.02370074040056712,
+          "params": {
+            "hidden_layer_sizes": [
+              64,
+              32
+            ],
+            "alpha": 0.00010332442162340679,
+            "learning_rate_init": 0.0021583463378426876
+          }
+        },
+        {
+          "number": 17,
+          "mcc": 0.010262478349012685,
+          "params": {
+            "hidden_layer_sizes": [
+              64,
+              32
+            ],
+            "alpha": 1.309606189292902e-05,
+            "learning_rate_init": 0.0026530554555301063
+          }
+        },
+        {
+          "number": 18,
+          "mcc": 0.027100134673031167,
+          "params": {
+            "hidden_layer_sizes": [
+              64,
+              32
+            ],
+            "alpha": 0.0006472848437808316,
+            "learning_rate_init": 0.004200831398196056
+          }
+        },
+        {
+          "number": 19,
+          "mcc": 0.037097701350239105,
+          "params": {
+            "hidden_layer_sizes": [
+              64,
+              32
+            ],
+            "alpha": 3.3935050025980685e-05,
+            "learning_rate_init": 0.00399050104862108
+          }
+        }
+      ],
+      "git_commit": "2a284b5"
+    },
+    "2020": {
+      "params": {
+        "hidden_layer_sizes": [
+          16
+        ],
+        "alpha": 0.00017942789949862697,
+        "learning_rate_init": 0.0005088238446512637
+      },
+      "mcc": 0.02863354715688193,
+      "default_mcc": 0.014982300363409098,
+      "fit_days": 85584,
+      "tune_days": 4998,
+      "tuning_set": "2019-01-02 to 2019-12-30",
+      "seconds": 21.4,
+      "trials": [
+        {
+          "number": 0,
+          "mcc": 0.014982300363409098,
+          "params": {
+            "hidden_layer_sizes": [
+              32,
+              16
+            ],
+            "alpha": 0.001,
+            "learning_rate_init": 0.001
+          }
+        },
+        {
+          "number": 1,
+          "mcc": 0.0074895399953909415,
+          "params": {
+            "hidden_layer_sizes": [
+              32,
+              16
+            ],
+            "alpha": 0.027385670863780086,
+            "learning_rate_init": 0.00018423901388762819
+          }
+        },
+        {
+          "number": 2,
+          "mcc": 0.005436795334769847,
+          "params": {
+            "hidden_layer_sizes": [
+              32,
+              16
+            ],
+            "alpha": 0.0004115490796801502,
+            "learning_rate_init": 0.005610838030884949
+          }
+        },
+        {
+          "number": 3,
+          "mcc": 0.016829135338986074,
+          "params": {
+            "hidden_layer_sizes": [
+              32,
+              16
+            ],
+            "alpha": 5.0649849323001125e-05,
+            "learning_rate_init": 0.0021988975026092177
+          }
+        },
+        {
+          "number": 4,
+          "mcc": 0.021995686871835927,
+          "params": {
+            "hidden_layer_sizes": [
+              16
+            ],
+            "alpha": 0.016094153686206553,
+            "learning_rate_init": 0.0006181908251174048
+          }
+        },
+        {
+          "number": 5,
+          "mcc": 0.018538963076289643,
+          "params": {
+            "hidden_layer_sizes": [
+              64,
+              32
+            ],
+            "alpha": 2.476898715992575e-05,
+            "learning_rate_init": 0.0029575130045780204
+          }
+        },
+        {
+          "number": 6,
+          "mcc": 0.024303144088936534,
+          "params": {
+            "hidden_layer_sizes": [
+              16
+            ],
+            "alpha": 1.3438126225486676e-05,
+            "learning_rate_init": 0.0002485022588201
+          }
+        },
+        {
+          "number": 7,
+          "mcc": 0.011308401166201517,
+          "params": {
+            "hidden_layer_sizes": [
+              64,
+              32
+            ],
+            "alpha": 0.0005893257109747328,
+            "learning_rate_init": 0.0006030958879577567
+          }
+        },
+        {
+          "number": 8,
+          "mcc": 0.005112665129397289,
+          "params": {
+            "hidden_layer_sizes": [
+              32,
+              16
+            ],
+            "alpha": 2.4940139631878453e-05,
+            "learning_rate_init": 0.00016621965599438504
+          }
+        },
+        {
+          "number": 9,
+          "mcc": 0.026499339671337628,
+          "params": {
+            "hidden_layer_sizes": [
+              64,
+              32
+            ],
+            "alpha": 3.386783306920752e-05,
+            "learning_rate_init": 0.0016485840935097575
+          }
+        },
+        {
+          "number": 10,
+          "mcc": 0.013563941986283828,
+          "params": {
+            "hidden_layer_sizes": [
+              16
+            ],
+            "alpha": 0.012393508546168257,
+            "learning_rate_init": 0.00390659041777098
+          }
+        },
+        {
+          "number": 11,
+          "mcc": 0.017334471537627683,
+          "params": {
+            "hidden_layer_sizes": [
+              64,
+              32
+            ],
+            "alpha": 5.497056155682167e-05,
+            "learning_rate_init": 0.0007767077563351
+          }
+        },
+        {
+          "number": 12,
+          "mcc": 0.022277116679242204,
+          "params": {
+            "hidden_layer_sizes": [
+              16
+            ],
+            "alpha": 1.0464681572328412e-05,
+            "learning_rate_init": 0.00030362245547450943
+          }
+        },
+        {
+          "number": 13,
+          "mcc": 0.0191435754353174,
+          "params": {
+            "hidden_layer_sizes": [
+              16
+            ],
+            "alpha": 0.00022124075394914667,
+            "learning_rate_init": 0.0001961873244219331
+          }
+        },
+        {
+          "number": 14,
+          "mcc": 0.023253811398879394,
+          "params": {
+            "hidden_layer_sizes": [
+              64,
+              32
+            ],
+            "alpha": 8.388625453090917e-05,
+            "learning_rate_init": 0.0002757809084292892
+          }
+        },
+        {
+          "number": 15,
+          "mcc": 0.02863354715688193,
+          "params": {
+            "hidden_layer_sizes": [
+              16
+            ],
+            "alpha": 0.00017942789949862697,
+            "learning_rate_init": 0.0005088238446512637
+          }
+        },
+        {
+          "number": 16,
+          "mcc": 0.013236310934292886,
+          "params": {
+            "hidden_layer_sizes": [
+              16
+            ],
+            "alpha": 0.0015496612958019768,
+            "learning_rate_init": 0.0003938614645136752
+          }
+        },
+        {
+          "number": 17,
+          "mcc": 0.019288990762758113,
+          "params": {
+            "hidden_layer_sizes": [
+              16
+            ],
+            "alpha": 0.00029981452141318295,
+            "learning_rate_init": 0.0009633806452672751
+          }
+        },
+        {
+          "number": 18,
+          "mcc": 0.020651563054159053,
+          "params": {
+            "hidden_layer_sizes": [
+              64,
+              32
+            ],
+            "alpha": 1.2232153628660919e-05,
+            "learning_rate_init": 0.001273743328994637
+          }
+        },
+        {
+          "number": 19,
+          "mcc": 0.012913237252528836,
+          "params": {
+            "hidden_layer_sizes": [
+              64,
+              32
+            ],
+            "alpha": 0.00011958280140954133,
+            "learning_rate_init": 0.001795037106058631
+          }
+        }
+      ],
+      "git_commit": "2a284b5"
+    }
+  }
+}
