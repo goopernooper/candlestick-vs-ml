@@ -41,6 +41,7 @@ Professor Danisman gave full latitude on design, so entries marked "Decided by: 
 | D-024 | Normalized OHLC over the same 3-day window as encoding B (post hoc) | Decided | 2026-11-09 |
 | D-025 | Market-exposure check: beta and alpha against buy-and-hold (post hoc) | Decided | 2026-11-09 |
 | D-026 | Replication of Caginalp & Laurent's patterns (post hoc, descriptive) | Decided | 2026-11-09 |
+| D-027 | Balanced misclassification as the classification loss | Decided | 2026-11-24 |
 
 ---
 
@@ -256,6 +257,14 @@ Fill in **Decided** during the meeting, update the index, and commit.
 - **Why:** Caginalp & Laurent is the strongest published evidence that candlestick patterns predict returns (Z = 36; 0.9% per bullish trade before costs), and Marshall et al. (2006) found the opposite. Running their test on our data lets the paper say whether the result holds in 2002–2022, and showing both statistics shows how much counting correlated signals as independent overstates significance. The paper itself notes the dependence (its Remark 3.3) and corrects for it only by an assumed factor.
 - **Differences that remain:** 22 large stocks instead of about 500; adjusted prices; two of the paper's printed formulas contain evident typos (the star patterns' midpoint and the last condition of three inside down), and we follow the text. In the paper, "out-of-sample" means the pattern definitions were taken from earlier books, not that the data were split.
 - **Post hoc, descriptive:** It does not affect any model or the main comparison.
+
+
+### D-027: Balanced misclassification as the classification loss
+- **Status:** Decided, 2026-11-24. Decided by: Joshua.
+- **Decision:** The daily classification loss used in the Diebold–Mariano tests, the Model Confidence Set and the SPA test (ANALYSIS_PLAN.md section 8) is balanced misclassification, not the plain share of stock-days misclassified. Each wrong call on an up day weighs 1/(2π), and each on a down day 1/(2(1 − π)), where π is the share of up days among that test year's labelled stock-days; the day's weighted errors are divided by its number of labelled stock-days (src/losses.py). The plain share is still written to results/<version>/losses_misclassification.csv for reference.
+- **Why:** Up days are about 52% of labelled days, so the plain share rewards predicting "up" more often, the bias that led us to choose MCC over accuracy as the headline metric. In results v4, always-long had a lower plain loss (0.4768) than every model except the two SVMs, despite an MCC of 0, and reversal, the baseline with the highest MCC (0.0233), had a higher plain loss (0.4891) than 17 models. A test on the plain loss would therefore have measured how often a model predicts "up", not how well it predicts direction, and would have contradicted the MCC half of the "beats a baseline" rule in section 9. With balanced weights a constant prediction scores about 0.5, consistent with its MCC of 0. The weights use the test year's own share of up days: this is part of scoring, as in balanced accuracy, and no model sees it.
+- **Timing:** Decided after seeing the v4 loss series but before any significance test was run and before the analysis plan was frozen.
+- **Alternatives considered:** The plain share (biased toward predicting "up"); weights from the training window's share of up days (the predictions table does not carry training labels, and test-year shares make a constant prediction score 0.5 within each year, including years like 2008 when the share shifts).
 
 ---
 

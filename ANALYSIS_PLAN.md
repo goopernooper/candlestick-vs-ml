@@ -110,10 +110,10 @@ Models are named `model_encoding` (for example `lightgbm_a`, `svm_ohlc`). All mo
 Daily losses are averaged across the 22 stocks before testing, because the stocks are not independent.
 
 1. **Loss series:** for each model, two daily series:
-   - the share of the day's labelled stock-days it got wrong (classification loss)
+   - **balanced misclassification** (classification loss): the day's wrong calls on labelled stock-days, with a wrong call on an up day weighted 1/(2π) and on a down day 1/(2(1 − π)), where π is the share of up days in that test year, divided by the number of labelled stock-days. Up and down days count equally, so a constant prediction scores about 0.5, consistent with its MCC of 0. This is the day-by-day form of 1 − balanced accuracy (D-027).
    - minus the portfolio's net long/short return at 5 bps (economic loss)
 
-   Both are written by every run to `results/<version>/losses_classification.csv` and `losses_economic.csv` (src/losses.py), one row per test day and one column per model. A day on which every stock is in the dead zone has no classification loss.
+   Both are written by every run to `results/<version>/losses_classification.csv` and `losses_economic.csv` (src/losses.py), one row per test day and one column per model, together with the plain share misclassified (`losses_misclassification.csv`), which is reported for reference but not tested. A day on which every stock is in the dead zone has no classification loss.
 2. **Diebold–Mariano tests** on the difference in daily loss between two models: a regression on a constant with Newey–West standard errors, lag = ⌊4(T/100)^(2/9)⌋. Two-sided, α = 0.05.
 3. **Model Confidence Set** (`arch.bootstrap.MCS`): all models, both loss series, 90% confidence, 10,000 block-bootstrap replications.
 4. **SPA test** (`arch.bootstrap.SPA`): does any model beat the benchmark? Benchmarks: always-long for the economic loss; the strongest baseline for the classification loss.
@@ -123,7 +123,7 @@ Daily losses are averaged across the 22 stocks before testing, because the stock
 
 A model **beats** a baseline on classification if:
 - its pooled MCC is higher, **and**
-- a Diebold–Mariano test on the daily classification-loss difference is significant at the 5% level.
+- a Diebold–Mariano test on the daily classification-loss (balanced misclassification) difference is significant at the 5% level.
 
 A model **beats** a baseline economically if:
 - its long/short Sharpe ratio at 5 bps is higher, **and**
