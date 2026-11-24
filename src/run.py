@@ -43,6 +43,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from dataset import build_table  # noqa: E402
 from evaluate import backtest, summarize  # noqa: E402
 from exposure import exposure_table  # noqa: E402
+from losses import write_losses  # noqa: E402
 from features import (PATTERNS, load_config, ohlc_window_columns, pattern_column,  # noqa: E402
                       symbol_window_columns, window_columns)
 from models.baselines import AlwaysLong, Majority, PreviousDay, RandomGuess, Reversal  # noqa: E402
@@ -269,7 +270,8 @@ def main() -> int:
     exposure.assign(git_commit=stamp).to_csv(out / "exposure.csv", index=False)
     preds.to_parquet(out / "predictions.parquet")
     written = ["summary.csv", "metrics_by_year.csv", "metrics_by_stock.csv", "backtest.csv",
-               "exposure.csv", "run_info.json", "predictions.parquet"]
+               "exposure.csv", *write_losses(preds, out, cost_bps=cost),
+               "run_info.json", "predictions.parquet"]
     if tuned:
         settings_table(tuned).assign(git_commit=stamp).to_csv(out / "tuned_settings.csv", index=False)
         written.append("tuned_settings.csv")
