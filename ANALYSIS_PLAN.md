@@ -217,6 +217,8 @@ where the selected stock-days are those whose confidence |P(up) − 0.5| is at o
 
 **Trading on confident days (secondary, descriptive).** For each of the six models and for `reversal`, a long/short portfolio holds positions only on that model's selected stock-days. Each selected stock-day gets an equal weight within its date; a date with no selected stock-day is held in cash. Positions run from close to close, costs are 5 bps per side, and reversal is traded on exactly the same stock-days as the model it is compared with. The report gives annual return, Sharpe ratio and break-even cost, on the development years (before the holdout is unlocked) and on the holdout. No significance test is attached, and no claim is based on it.
 
+Section 13.1 is computed by `python src/confirmatory.py <version>`, which writes `confirmatory_tests.csv` and `confirmatory_backtest.csv`. It needs the run's validation predictions from `python src/coverage.py <version>`. On a holdout run, it uses only the 2023–2025 test years. In the confident-days backtest, weights move from close to close, and the 5 bps cost is charged on every change of weight, including when the number of selected stocks on a date changes.
+
 ## 14. Deviations after freezing
 
 | Date | What changed | Why | Effect on results |
