@@ -89,3 +89,60 @@ def test_plot_writes_a_figure(tmp_path):
     test = pd.concat([preds(m, years, rng, i == 0) for i, m in enumerate(["lightgbm_b", "reversal", "x"])])
     plot(coverage_table(val, test), tmp_path / "c.png", "test")
     assert (tmp_path / "c.png").stat().st_size > 10_000
+
+
+# --------------------------------------------- against reversal on the same days
+from coverage import bootstrap_vs_benchmark, same_days  # noqa: E402
+
+
+def dated(seed=5, days=600, stocks=8, edge=0.15):
+    """Test and validation tables with dates and tickers. 'reversal' is a coin
+    flip at constant confidence. 'copycat' copies reversal's call and is
+    confident on random days. 'skilled' is right with probability 0.5 + edge on
+    its confident days (confidence above 0.3) and a coin flip otherwise."""
+    rng = np.random.default_rng(seed)
+    out = []
+    for year in [2005, 2006]:
+        idx = pd.Index(pd.bdate_range(f"{year}-01-03", periods=days), name="date")
+        rows = []
+        for t in range(stocks):
+            up = rng.integers(0, 2, days)
+            rev = rng.integers(0, 2, days)
+            conf = rng.uniform(0, 0.5, days)
+            right = rng.random(days) < np.where(conf > 0.3, 0.5 + edge, 0.5)
+            skilled = np.where(right, up, 1 - up)
+            for model, pred, c in [("reversal", rev, np.full(days, 0.5)), ("copycat", rev, conf),
+                                   ("skilled", skilled, conf)]:
+                rows.append(pd.DataFrame({"ticker": f"S{t}", "model": model, "test_year": year,
+                                          "pred": pred, "p_up": np.where(pred == 1, 0.5 + c, 0.5 - c),
+                                          "up": pd.array(up, dtype="Int8")}, index=idx))
+        out.append(pd.concat(rows))
+    return out[0].assign(test_year=2006), out[1]          # validation for the 2006 fold, then its test year
+
+
+def test_same_days_lines_up_stock_days():
+    val, test = dated()
+    sel = test[(test["model"] == "skilled")].iloc[::7]
+    b = same_days(sel, test, "reversal")
+    assert len(b) == len(sel) and (b["ticker"].to_numpy() == sel["ticker"].to_numpy()).all()
+    assert (b.index == sel.index).all() and (b["model"] == "reversal").all()
+
+
+def test_benchmark_on_the_same_days():
+    val, test = dated()
+    t = coverage_table(val, test).set_index(["model", "target_coverage"])
+    # copycat makes reversal's calls, so on its chosen days the two agree exactly
+    assert t.loc[("copycat", 0.25), "mcc_minus_benchmark"] == pytest.approx(0, abs=1e-12)
+    assert t.loc[("skilled", 0.25), "mcc_minus_benchmark"] > 0.1
+    assert (t.loc["reversal", "mcc_minus_benchmark"] == 0).all()
+
+
+def test_bootstrap_intervals_separate_skill_from_copying():
+    val, test = dated()
+    b = bootstrap_vs_benchmark(val, test, reps=300, seed=1).set_index(["model", "target_coverage"])
+    assert "reversal" not in b.index.get_level_values("model")
+    assert b.loc[("skilled", 0.25), "diff_low"] > 0
+    assert b.loc[("copycat", 0.25), ["diff_low", "diff_high"]].abs().max() < 1e-12
+    point = coverage_table(val, test).set_index(["model", "target_coverage"])
+    assert b.loc[("skilled", 0.10), "diff"] == pytest.approx(point.loc[("skilled", 0.10), "mcc_minus_benchmark"])
+    assert (b["mcc_low"] <= b["mcc"]).all() and (b["mcc"] <= b["mcc_high"]).all()

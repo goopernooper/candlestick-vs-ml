@@ -42,6 +42,7 @@ Professor Danisman gave full latitude on design, so entries marked "Decided by: 
 | D-025 | Market-exposure check: beta and alpha against buy-and-hold (post hoc) | Decided | 2026-11-09 |
 | D-026 | Replication of Caginalp & Laurent's patterns (post hoc, descriptive) | Decided | 2026-11-09 |
 | D-027 | Balanced misclassification as the classification loss | Decided | 2026-11-24 |
+| D-028 | Coverage curves: compare with reversal on the same stock-days (post hoc) | Decided | 2026-11-25 |
 
 ---
 
@@ -265,6 +266,13 @@ Fill in **Decided** during the meeting, update the index, and commit.
 - **Why:** Up days are about 52% of labelled days, so the plain share rewards predicting "up" more often, the bias that led us to choose MCC over accuracy as the headline metric. In results v4, always-long had a lower plain loss (0.4768) than every model except the two SVMs, despite an MCC of 0, and reversal, the baseline with the highest MCC (0.0233), had a higher plain loss (0.4891) than 17 models. A test on the plain loss would therefore have measured how often a model predicts "up", not how well it predicts direction, and would have contradicted the MCC half of the "beats a baseline" rule in section 9. With balanced weights a constant prediction scores about 0.5, consistent with its MCC of 0. The weights use the test year's own share of up days: this is part of scoring, as in balanced accuracy, and no model sees it.
 - **Timing:** Decided after seeing the v4 loss series but before any significance test was run and before the analysis plan was frozen.
 - **Alternatives considered:** The plain share (biased toward predicting "up"); weights from the training window's share of up days (the predictions table does not carry training labels, and test-year shares make a constant prediction score 0.5 within each year, including years like 2008 when the share shifts).
+
+
+### D-028: Coverage curves: compare with reversal on the same stock-days
+- **Status:** Decided, 2026-11-25. Decided by: Joshua.
+- **Decision:** For each model and target coverage, score the reversal baseline on exactly the stock-days the model acts on, and give the difference in MCC a 95% stationary-bootstrap interval over dates (mean block 20 days, 10,000 replications, the same resampled dates for every model and target). Written to results/<version>/coverage_vs_reversal.csv and .png by src/coverage.py.
+- **Why:** In the v4 coverage curves, every candle-based model's MCC rose as it acted on fewer, more confident days (to 0.045–0.097 on its top 10%), while reversal, which gives every day the same confidence, stayed at 0.024. Comparing the two on different days does not show whether the models add anything: their confident days might be exactly the days on which reversal works best, such as after large moves. Scoring reversal on the same days answers that.
+- **Post hoc:** Added after seeing the v4 coverage curves, before the analysis plan was frozen. Reported as such.
 
 ---
 
