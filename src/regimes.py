@@ -31,10 +31,14 @@ as the main results:
             with like; picking each regime's best baseline would also let a
             lucky coin flip become the benchmark.
 The high-volatility SPY regime is also broken down by episode (2008-09, 2011,
-2020, 2022, other), because a few episodes dominate it.
+2020, 2022, other): each episode's share of the high-volatility days, every
+model's metrics on that episode alone (and its MCC minus the benchmark's on the
+same days), and the high-volatility results with each episode left out. A
+result that moves a lot when one episode is dropped rests on that episode.
 
 Writes results/<version>/regime_days.csv, regime_metrics.csv,
-regime_tests.csv, regime_mcs.csv and regime_episodes.csv.
+regime_tests.csv, regime_mcs.csv, regime_episodes.csv,
+regime_episodes_leave_one_out.csv and regime_episodes.png.
 """
 from __future__ import annotations
 
@@ -148,15 +152,84 @@ def analyse(preds: pd.DataFrame, days: pd.DataFrame, reps: int | None = None) ->
                 mcs_rows.append(m.rename_axis("model").reset_index().assign(
                     definition=definition, regime=regime, loss=loss))
         if definition == "spy":
-            high = reg.index[reg == "high"]
-            for name in [*EPISODES, "other"]:
-                dates = [d for d in high if episode(d) == name]
-                if dates:
-                    episode_rows.append(metrics_on(preds, net, dates).assign(episode=name))
+            ep, loo = episode_breakdown(preds, net, reg.index[reg == "high"], strongest)
     return {"metrics": pd.concat(metric_rows, ignore_index=True),
             "tests": pd.DataFrame(test_rows),
             "mcs": pd.concat(mcs_rows, ignore_index=True),
-            "episodes": pd.concat(episode_rows, ignore_index=True)}
+            "episodes": ep, "leave_one_out": loo}
+
+
+def episode_breakdown(preds: pd.DataFrame, net: dict, high, benchmark: str) -> tuple[pd.DataFrame, pd.DataFrame]:
+    """How much do a few events drive the high-volatility results?
+
+    episodes       metrics on each episode's high-volatility days, with the
+                   episode's share of all high-volatility days and each model's
+                   MCC minus the benchmark's on the same days
+    leave_one_out  metrics on all high-volatility days except one episode's: a
+                   result that changes a lot when one episode is dropped rests
+                   on that episode
+    """
+    high = pd.Index(high)
+    names = pd.Series([episode(d) for d in high], index=high)
+    rows, loo = [], []
+    for name in [*EPISODES, "other"]:
+        dates = names.index[names == name]
+        if len(dates) == 0:
+            continue
+        m = metrics_on(preds, net, dates)
+        bench = m.set_index("model").loc[benchmark, "mcc"] if benchmark in set(m["model"]) else np.nan
+        rows.append(m.assign(episode=name, episode_days=len(dates), share_of_high_days=len(dates) / len(high),
+                             mcc_minus_benchmark=m["mcc"] - bench, benchmark=benchmark))
+        if name != "other":
+            loo.append(metrics_on(preds, net, names.index[names != name]).assign(
+                dropped=name, days_left=int((names != name).sum())))
+    loo.append(metrics_on(preds, net, high).assign(dropped="none", days_left=len(high)))
+    return pd.concat(rows, ignore_index=True), pd.concat(loo, ignore_index=True)
+
+
+def plot_episodes(ep: pd.DataFrame, loo: pd.DataFrame, path: Path, benchmark: str) -> None:
+    """Left: MCC on each episode's high-volatility days. Right: MCC on all
+    high-volatility days with one episode left out."""
+    import matplotlib
+    matplotlib.use("Agg")
+    import matplotlib.pyplot as plt
+    from coverage import GRID, HIGHLIGHT, INK, MUTED, SURFACE
+    shown = [m for m in HIGHLIGHT if m in set(ep["model"])]
+    order = [e for e in [*EPISODES, "other"] if e in set(ep["episode"])]
+    days = ep.drop_duplicates("episode").set_index("episode")
+    fig, axes = plt.subplots(1, 2, figsize=(11.5, 4.8), facecolor=SURFACE, sharey=True)
+    for ax, frame, col, cats, labels, xlabel in [
+        (axes[0], ep, "episode", order,
+         [f"{e}\n{int(days.loc[e, 'episode_days'])} days ({days.loc[e, 'share_of_high_days']:.0%})" for e in order],
+         "Episode (high-volatility days in it, share of all high-volatility days)"),
+        (axes[1], loo, "dropped", ["none", *[e for e in order if e != "other"]],
+         ["all high-vol\ndays", *[f"without\n{e}" for e in order if e != "other"]],
+         "High-volatility days with one episode left out")]:
+        ax.set_facecolor(SURFACE)
+        width = 0.12
+        for i, model in enumerate(shown):
+            color, marker = HIGHLIGHT[model]
+            g = frame[frame["model"] == model].set_index(col).reindex(cats)
+            x = np.arange(len(cats)) + (i - (len(shown) - 1) / 2) * width
+            ax.plot(x, g["mcc"], linestyle="none", marker=marker, ms=7, color=color, mec=SURFACE, mew=1.2,
+                    label=model, zorder=3)
+        ax.axhline(0, color=MUTED, lw=1, zorder=2)
+        ax.set_xticks(np.arange(len(cats)))
+        ax.set_xticklabels(labels, fontsize=8.5)
+        ax.set_xlabel(xlabel, fontsize=9)
+        ax.grid(True, axis="y", color=GRID, lw=0.8)
+        ax.set_axisbelow(True)
+        for side in ["top", "right"]:
+            ax.spines[side].set_visible(False)
+        ax.tick_params(colors=MUTED)
+    axes[0].set_ylabel("MCC", color=INK)
+    axes[1].legend(frameon=False, fontsize=8.5, loc="upper left", bbox_to_anchor=(1.01, 1))
+    fig.suptitle("High-volatility results by episode", x=0.01, ha="left", fontsize=11.5)
+    fig.text(0.01, 0.005, f"High volatility: SPY's 21-day volatility in the top tercile of all earlier days. "
+             f"Benchmark for comparisons: {benchmark}.", fontsize=8, color=MUTED)
+    fig.tight_layout(rect=(0, 0.03, 1, 0.95))
+    fig.savefig(path, dpi=200, facecolor=SURFACE)
+    plt.close(fig)
 
 
 def main() -> int:
@@ -183,7 +256,7 @@ def main() -> int:
           flush=True)
     out = analyse(preds, days, reps=args.reps)
     for key, name in [("metrics", "regime_metrics"), ("tests", "regime_tests"), ("mcs", "regime_mcs"),
-                      ("episodes", "regime_episodes")]:
+                      ("episodes", "regime_episodes"), ("leave_one_out", "regime_episodes_leave_one_out")]:
         out[key].to_csv(folder / f"{name}.csv", index=False)
 
     test_days = pd.Index(sorted(preds.index.unique()))
@@ -191,31 +264,49 @@ def main() -> int:
     print("\nTest days per SPY-volatility regime: "
           + ", ".join(f"{r} {int((reg == r).sum())}" for r in LABELS))
     met = out["metrics"][out["metrics"]["definition"] == "spy"]
-    wide = met.pivot(index="model", columns="regime", values="mcc")[LABELS]
     t = out["tests"]
-    c = t[(t["definition"] == "spy") & (t["loss"] == "classification")]
-    bench = c.groupby("regime")["benchmark"].first()
-    p = c.pivot(index="model", columns="regime", values="p_value")
+    alpha = load_config()["significance"]["alpha"]
     mc = out["mcs"]
-    inside = mc[(mc["definition"] == "spy") & (mc["loss"] == "classification")].pivot(
-        index="model", columns="regime", values="in_mcs")
-    print(f"\nMCC by SPY-volatility regime (p: Diebold-Mariano against {bench.iloc[0]} on the classification "
-          "loss; * = in the 90% Model Confidence Set):\n")
-    print(f"  {'model':<15}" + "".join(f"{r:>30}" for r in LABELS))
-    for model in wide.sort_values("high", ascending=False).index:
-        cells = ""
-        for r in LABELS:
-            pv = p.loc[model, r] if model in p.index and r in p.columns else np.nan
-            star = "*" if model in inside.index and bool(inside.loc[model, r]) else " "
-            pv_text = f"p={pv:.2f}" if not np.isnan(pv) else "   -  "
-            cells += f"{wide.loc[model, r]:>+14.4f}{star} {pv_text:>8}      "
-        print(f"  {model:<15}{cells}")
-    ep = out["episodes"].pivot(index="model", columns="episode", values="mcc")
-    print("\nHigh-volatility days by episode, MCC:\n")
-    print(ep[[e for e in [*EPISODES, "other"] if e in ep.columns]].sort_values("2008-09", ascending=False)
-          .to_string(float_format=lambda x: f"{x:+.4f}"))
+
+    def verdict(row) -> str:
+        if row is None or np.isnan(row["p_value"]):
+            return f"{'(benchmark)':<17}"
+        mark = ("better" if row["dm_stat"] < 0 else "worse") if row["p_value"] < alpha else ""
+        return f"{'DM ' + format(row['dm_stat'], '+6.2f') + ' ' + mark:<17}"
+
+    for loss, label, values in [("classification", "MCC", "mcc"), ("economic", "long/short Sharpe", "ls_sharpe")]:
+        tl = t[(t["definition"] == "spy") & (t["loss"] == loss)].set_index(["model", "regime"])
+        bench = tl["benchmark"].iloc[0]
+        inside = mc[(mc["definition"] == "spy") & (mc["loss"] == loss)].set_index(["model", "regime"])["in_mcs"]
+        wide = met.pivot(index="model", columns="regime", values=values)[LABELS]
+        print(f"\n{label} by SPY-volatility regime. DM: Diebold-Mariano statistic against {bench} on the "
+              f"{loss} loss,\nnegative = lower loss than {bench}; 'better' / 'worse' = significant at "
+              f"{alpha:.0%}; * = in the 90% Model Confidence Set.\n")
+        print(f"  {'model':<15}" + "".join(f"{r:<28}" for r in LABELS))
+        for model in wide.sort_values("high", ascending=False).index:
+            cells = ""
+            for r in LABELS:
+                row = tl.loc[(model, r)] if (model, r) in tl.index else None
+                star = "*" if bool(inside.get((model, r), False)) else " "
+                cells += f"{wide.loc[model, r]:>+8.4f}{star} {verdict(row)} "
+            print(f"  {model:<15}{cells}")
+    ep_all, loo = out["episodes"], out["leave_one_out"]
+    order = [e for e in [*EPISODES, "other"] if e in set(ep_all["episode"])]
+    counts = ep_all.drop_duplicates("episode").set_index("episode").loc[order]
+    print("\nHigh-volatility days by episode: "
+          + ", ".join(f"{e} {int(r.episode_days)} ({r.share_of_high_days:.0%})" for e, r in counts.iterrows()))
+    ep = ep_all.pivot(index="model", columns="episode", values="mcc")[order]
+    print("\nMCC on each episode's high-volatility days:\n")
+    print(ep.sort_values(order[0], ascending=False).to_string(float_format=lambda x: f"{x:+.4f}"))
+    lw = loo.pivot(index="model", columns="dropped", values="mcc")
+    lw = lw[["none", *[e for e in order if e != "other"]]].rename(
+        columns={"none": "all high", **{e: f"w/o {e}" for e in order}})
+    print("\nMCC on all high-volatility days, and with one episode left out:\n")
+    print(lw.sort_values("all high", ascending=False).to_string(float_format=lambda x: f"{x:+.4f}"))
+    plot_episodes(ep_all, loo, folder / "regime_episodes.png", ep_all["benchmark"].iloc[0])
     print(f"\nWrote results/{args.version}/regime_days.csv, regime_metrics.csv, regime_tests.csv, "
-          "regime_mcs.csv, regime_episodes.csv (VIX regimes included)")
+          "regime_mcs.csv, regime_episodes.csv, regime_episodes_leave_one_out.csv, regime_episodes.png "
+          "(VIX regimes included)")
     return 0
 
 

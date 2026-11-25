@@ -155,7 +155,7 @@ Consistency across years (the number of the 18 folds in which the model beats th
 
 - **Definition** (D-014): SPY's trailing 21-day realized volatility on day *t*, assigned to low / medium / high by terciles. The tercile cutoffs on day *t* use only volatility values through day *t* − 1, on an expanding window starting 2002-01-02.
 - **Analysis:** every model is re-evaluated within each regime, with the same metrics and tests.
-- The high-volatility results are also broken down by episode (2008–09, 2011, 2020, 2022), because a few episodes dominate that regime.
+- The high-volatility results are also broken down by episode (2008–09, 2011, 2020, 2022, and the remaining high-volatility days as "other"), because a few episodes may dominate that regime. For each episode: its share of the high-volatility days, every model's metrics on its days alone, and each model's MCC minus the benchmark's on the same days. And for each named episode: the high-volatility results with that episode left out. Written to `results/<version>/regime_episodes.csv`, `regime_episodes_leave_one_out.csv` and `regime_episodes.png`.
 - **Robustness:** VIX terciles in place of SPY volatility.
 - **Details fixed before running:**
   - Volatility is the standard deviation of SPY's daily close-to-close returns over the 21 trading days ending on day *t*, annualized.

@@ -93,3 +93,26 @@ def test_models_are_judged_within_each_regime():
     assert low.set_index("model").loc["calm", "in_mcs"] and not low.set_index("model").loc["storm", "in_mcs"]
     assert set(out["episodes"]["episode"]) <= {"2008-09", "2011", "2020", "2022", "other"}
     assert {"2008-09"} <= set(out["episodes"]["episode"])
+
+
+def test_episode_breakdown_and_leave_one_out(tmp_path):
+    from regimes import plot_episodes
+    preds, days = fake()
+    out = analyse(preds, days, reps=100)
+    ep, loo = out["episodes"], out["leave_one_out"]
+    shares = ep.drop_duplicates("episode")
+    assert shares["share_of_high_days"].sum() == pytest.approx(1.0)
+    assert (ep["benchmark"] == "reversal").all()
+    rev = ep[ep["model"] == "reversal"]
+    assert (rev["mcc_minus_benchmark"].abs() < 1e-12).all()
+    # leaving out an episode leaves the other high-volatility days
+    total = int(loo.loc[loo["dropped"] == "none", "days_left"].iloc[0])
+    for name, r in shares.set_index("episode").iterrows():
+        if name != "other":
+            left = loo.loc[loo["dropped"] == name, "days_left"].iloc[0]
+            assert left == total - r["episode_days"]
+    # 'storm' is right on every high-volatility day, with or without any one episode
+    storm = loo[loo["model"] == "storm"]
+    assert (storm["mcc"] > 0.9).all()
+    plot_episodes(ep, loo, tmp_path / "e.png", "reversal")
+    assert (tmp_path / "e.png").stat().st_size > 10_000
