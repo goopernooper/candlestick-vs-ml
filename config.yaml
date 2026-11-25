@@ -47,7 +47,7 @@ splits:
   # ANALYSIS_PLAN.md is frozen and tagged (week 8), then switch it on for the
   # single holdout run in week 9 and log that in DECISIONS.md.
   holdout_years: [2023, 2025]
-  unlock_holdout: false
+  unlock_holdout: true   # unlocked 2026-11-25 for the single holdout run (DECISIONS.md D-031)
   # The purge gap between training and test equals labels.horizon (above).
   # Hyperparameters are tuned inside each training window: fit on the earlier
   # years, score on the last tuning_years years (with the same purge gap in

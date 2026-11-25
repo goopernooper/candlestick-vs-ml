@@ -45,6 +45,7 @@ Professor Danisman gave full latitude on design, so entries marked "Decided by: 
 | D-028 | Coverage curves: compare with reversal on the same stock-days (post hoc) | Decided | 2026-11-25 |
 | D-029 | Confirmatory holdout hypothesis: confident days beat reversal | Decided | 2026-11-25 |
 | D-030 | Robustness checks: details | Decided | 2026-11-25 |
+| D-031 | Holdout unlocked | Decided | 2026-11-25 |
 
 ---
 
@@ -301,6 +302,15 @@ Fill in **Decided** during the meeting, update the index, and commit.
   - **Dead zone:** retrains all models at 0 and 0.2 × volatility.
 - **Why:** Re-tuning each check would mix the effect of the change with the effect of new settings, and would cost 20 trials per model again. Count-based settings tuned on about 100,000 pooled training days would make a per-stock model of about 700–5,000 days useless (k-NN's *k* up to about 950, leaves of up to 2,000 days), so they are scaled by the ratio of the data sizes. Per-stock training covers six models rather than all sixteen to keep the run short. The six are the strongest models of each family and both pattern models.
 - **Timing:** fixed before any robustness result was seen.
+
+
+### D-031: Holdout unlocked
+- **Status:** Decided, 2026-11-25. Decided by: Joshua.
+- **Decision:** `unlock_holdout: true` in config.yaml, for the single holdout run of ANALYSIS_PLAN.md section 13. The plan was frozen and tagged `analysis-plan-frozen` before this change.
+- **Consequences:**
+  - `python src/run.py --version holdout --holdout` predicts 2023–2025 with the frozen pipeline, and the section 13 analyses follow.
+  - The results are committed whatever they show.
+  - Nothing about the method changes afterwards: any later change is listed in ANALYSIS_PLAN.md section 14, and both the original and corrected holdout results are reported.
 
 ---
 
