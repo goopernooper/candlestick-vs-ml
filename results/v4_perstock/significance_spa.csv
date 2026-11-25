@@ -1,0 +1,4 @@
+loss,benchmark,models,p_lower,p_consistent,p_upper
+classification,reversal,10,0.4767,0.6046,0.8256
+economic,always_long,10,0.512,0.9098,0.996
+long_flat,always_long,10,0.5121,0.9095,0.996
