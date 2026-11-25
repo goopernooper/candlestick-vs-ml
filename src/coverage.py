@@ -300,9 +300,9 @@ def plot_vs_benchmark(boot: pd.DataFrame, path: Path, title: str) -> None:
     plt.close(fig)
 
 
-def validation_predictions(version: str, models) -> pd.DataFrame:
+def validation_predictions(version: str, models, years=None) -> pd.DataFrame:
     """Fit every model on each fold's fit set and predict its validation year,
-    with the settings the main run used."""
+    with the settings the main run used, for the folds of `years` (default: all)."""
     import manifest
     from dataset import build_table
     from run import experiments
@@ -319,6 +319,8 @@ def validation_predictions(version: str, models) -> pd.DataFrame:
             settings = tuned_settings(table, folds, name, specs[name], log=lambda _: None)
             specs[name] = with_settings(specs[name], settings)
     from run import run_experiments
+    if years is not None:
+        folds = [f for f in folds if f.test_year in set(years)]
     return run_experiments(table, validation_folds(folds), specs,
                            progress=lambda f: print(f.test_year, end=" ", flush=True))
 
@@ -341,7 +343,7 @@ def main() -> int:
     else:
         print(f"Fitting {len(models)} models on each fold's fit set to predict its validation year "
               "(about as long as the main run's 18 folds, with cached tuning):", flush=True)
-        val = validation_predictions(args.version, models)
+        val = validation_predictions(args.version, models, years=sorted(test["test_year"].unique()))
         val.to_parquet(val_path)
         print()
     table = coverage_table(val, test)

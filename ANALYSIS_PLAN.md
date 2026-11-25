@@ -1,6 +1,6 @@
 # Analysis Plan
 
-**Status: DRAFT** (week 4, 2026-10-29; decisions confirmed 2026-11-03; confirmatory holdout hypothesis added 2026-11-25, section 13.1). To be frozen and tagged `analysis-plan-frozen` in week 8, before the 2023–2025 holdout is unlocked.
+**Status: FROZEN** on 2026-11-25 and tagged `analysis-plan-frozen`, before the 2023–2025 holdout was unlocked. Drafted from week 4 (2026-10-29); decisions confirmed 2026-11-03; confirmatory holdout hypothesis added 2026-11-25 (section 13.1). Any later change is listed in section 14.
 
 This document fixes, before the final results are seen, exactly what will be run and how it will be judged. Once frozen, nothing in it changes. Any later deviation is listed in the Deviations section at the end with its date and reason, and is reported in the paper.
 
@@ -185,7 +185,16 @@ Each check is reported with the same metrics and the section 9 verdicts as the m
 
 1. Freeze this plan: commit, then tag `analysis-plan-frozen`.
 2. Set `unlock_holdout: true` in `config.yaml` and log it in DECISIONS.md.
-3. Run the frozen pipeline once on 2023–2025 and commit the results, whatever they show.
+3. Run the frozen pipeline once on 2023–2025 and commit the results, whatever they show:
+   ```
+   python src/run.py --version holdout --holdout
+   python src/coverage.py holdout
+   python src/confirmatory.py holdout
+   python src/significance.py holdout
+   python src/bootstrap_ci.py holdout
+   python src/regimes.py holdout
+   ```
+   The holdout run predicts only 2023–2025 (`--holdout`). The 2023 and 2024 folds use the 2020 tuning and the 2025 fold the 2025 retune, as section 6 specifies; all earlier tuning is reused from `results/tuning/`. While the holdout is unlocked, `run.py` refuses development runs, so the two sets of years cannot be pooled by accident.
 4. No model, setting or feature is changed after seeing the holdout. If a bug is found afterwards, it is fixed and both the original and corrected holdout results are reported.
 
 ### 13.1 Confirmatory hypothesis: confident days beat reversal (D-029)

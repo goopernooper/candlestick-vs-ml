@@ -117,3 +117,16 @@ def test_setting_names():
     assert setting({}, 0.1) == "main"
     assert setting({"dead_zone_k": 0.0}, 0.1) == "dead zone 0x"
     assert setting({"dead_zone_k": 0.1, "per_stock": True}, 0.1) == "per-stock"
+
+
+def test_holdout_run_guards(monkeypatch, capsys):
+    """--holdout needs the holdout unlocked, and an unlocked holdout needs --holdout."""
+    import run
+    from features import load_config
+    monkeypatch.setattr(sys, "argv", ["run.py", "--version", "x", "--holdout"])
+    assert run.main() == 1
+    assert "unlock_holdout: true" in capsys.readouterr().out
+    monkeypatch.setitem(load_config()["splits"], "unlock_holdout", True)
+    monkeypatch.setattr(sys, "argv", ["run.py", "--version", "x"])
+    assert run.main() == 1
+    assert "Use --holdout" in capsys.readouterr().out

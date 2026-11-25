@@ -261,7 +261,18 @@ def main() -> int:
                         help="robustness: dead-zone threshold multiple instead of config.yaml's")
     parser.add_argument("--per-stock", action="store_true",
                         help="robustness: train one model per stock instead of pooling")
+    parser.add_argument("--holdout", action="store_true",
+                        help="the single holdout run (ANALYSIS_PLAN.md section 13): predict only the "
+                             "holdout years; needs unlock_holdout: true in config.yaml")
     args = parser.parse_args()
+    unlocked = load_config()["splits"]["unlock_holdout"]
+    if args.holdout and not unlocked:
+        print("--holdout needs unlock_holdout: true in config.yaml (only after the plan is frozen and tagged).")
+        return 1
+    if unlocked and not args.holdout:
+        print("The holdout is unlocked: development runs would now also predict 2023-2025 and pool them "
+              "with 2005-2022. Use --holdout for the holdout run, or set unlock_holdout back to false.")
+        return 1
     if (args.per_stock or args.dead_zone_k is not None) and not (args.frozen_settings or args.untuned):
         print("Robustness runs use the main run's settings: add --frozen-settings.")
         return 1
@@ -289,7 +300,14 @@ def main() -> int:
 
     feature_sets = sorted({fs for sp in specs.values() for fs in sp["feature_sets"]})
     table = build_table(feature_sets=feature_sets)
-    folds = walk_forward(table.index)
+    all_folds = walk_forward(table.index)
+    if args.holdout:
+        first, last = cfg["splits"]["holdout_years"]
+        folds = [f for f in all_folds if first <= f.test_year <= last]
+        print(f"HOLDOUT RUN: predicting {first}-{last} only "
+              f"({len(folds)} folds; training windows still start {cfg['splits']['train_start']}).\n")
+    else:
+        folds = all_folds
 
     tuned = {}
     tunable = [] if args.untuned else [name for name, sp in specs.items() if "tune" in sp]
@@ -297,7 +315,7 @@ def main() -> int:
         from tune import cached_settings
         print(f"Using the saved tuned settings for {len(tunable)} models (no tuning).")
         for name in tunable:
-            tuned[name] = cached_settings(name, specs[name], folds)
+            tuned[name] = cached_settings(name, specs[name], all_folds)
             if args.per_stock:
                 n = table["ticker"].nunique()
                 tuned[name] = {y: per_stock_settings(p, n) for y, p in tuned[name].items()}
@@ -307,7 +325,9 @@ def main() -> int:
         print(f"Tuning {len(tunable)} models, {cfg['tuning']['n_trials']} trials per retune year "
               f"(cached in results/tuning/):")
         for name in tunable:
-            tuned[name] = tuned_settings(table, folds, name, specs[name], retune=args.retune, stamp=stamp)
+            # every fold's settings, so the holdout folds reuse the saved 2020 tuning and
+            # add the 2025 retune (ANALYSIS_PLAN.md section 6)
+            tuned[name] = tuned_settings(table, all_folds, name, specs[name], retune=args.retune, stamp=stamp)
             specs[name] = with_settings(specs[name], tuned[name])
         print()
     print(f"Running {len(specs)} models on {len(folds)} folds: ", end="", flush=True)
@@ -342,7 +362,7 @@ def main() -> int:
         "models": {name: sp["features"] for name, sp in specs.items()},
         "tuned": sorted(tuned), "untuned": bool(args.untuned),
         "frozen_settings": bool(args.frozen_settings), "per_stock": bool(args.per_stock),
-        "dead_zone_k": cfg["labels"]["dead_zone_k"],
+        "dead_zone_k": cfg["labels"]["dead_zone_k"], "holdout": bool(args.holdout),
         "stocks": int(table["ticker"].nunique()), "test_days": int(len(preds) // preds["model"].nunique()),
         "first_date": str(table.index.min().date()), "last_date": str(table.index.max().date()),
         "config": cfg}, indent=2, default=str) + "\n")

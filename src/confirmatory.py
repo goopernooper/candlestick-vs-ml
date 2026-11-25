@@ -208,7 +208,7 @@ def main() -> int:
     print(f"  {'model':<15}{'stock-days':>11}{'model MCC':>11}{'reversal':>10}{'difference':>12}"
           f"{'95% interval':>22}{'p':>9}   Holm")
     for r in t.itertuples():
-        print(f"  {r.model:<15}{r.stock_days:>11,}{r.model_mcc:>+11.4f}{r.reversal_mcc:>+10.4f}{r.delta:>+12.4f}"
+        print(f"  {r.model:<15}{int(r.stock_days):>11,}{r.model_mcc:>+11.4f}{r.reversal_mcc:>+10.4f}{r.delta:>+12.4f}"
               f"   [{r.ci_low:+.4f}, {r.ci_high:+.4f}]{r.p_one_sided:>9.4f}   "
               f"{'rejected' if r.holm_rejected else '-'}")
     print("\nTrading only on the confident stock-days (long/short, equal weight within each date, "
