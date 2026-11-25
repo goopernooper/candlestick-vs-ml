@@ -157,6 +157,12 @@ Consistency across years (the number of the 18 folds in which the model beats th
 - **Analysis:** every model is re-evaluated within each regime, with the same metrics and tests.
 - The high-volatility results are also broken down by episode (2008–09, 2011, 2020, 2022), because a few episodes dominate that regime.
 - **Robustness:** VIX terciles in place of SPY volatility.
+- **Details fixed before running:**
+  - Volatility is the standard deviation of SPY's daily close-to-close returns over the 21 trading days ending on day *t*, annualized.
+  - A day is assigned a regime only once 252 earlier values exist (only 2002–2003 lack one, before the first test year).
+  - Within each regime, the benchmarks are the same as in section 9 over all test days: the strongest baseline overall (reversal) for the classification loss, and always-long for the economic loss.
+  - The long/short return within a regime is the mean daily net return on that regime's days (annualized arithmetically), with positions carried across regime boundaries.
+  - Computed by `python src/regimes.py <version>` and written to `results/<version>/regime_*.csv`.
 
 ## 12. Robustness checks
 
