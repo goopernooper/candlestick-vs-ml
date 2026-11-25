@@ -146,6 +146,9 @@ Consistency across years (the number of the 18 folds in which the model beats th
 - On each fold's tuning year, choose confidence cutoffs (|P(up) − 0.5|) that would trade 100%, 50%, 25% and 10% of days.
 - Apply them unchanged to the test year.
 - Report accuracy and MCC against the coverage actually achieved, for every model.
+- The tuning year's predictions come from the model fitted on the training window minus that year, with the fold's settings: the same split as tuning, so the cutoffs use only out-of-sample predictions the model could have made at the time.
+- A model that gives every validation day the same confidence (majority, always-long, previous-day, reversal) cannot rank days and acts on all of them at every target.
+- Computed by `python src/coverage.py <version>`, written to `results/<version>/coverage.csv` and `coverage.png`.
 
 ## 11. Regimes
 

@@ -225,3 +225,4 @@ data/raw/
 *.zip
 results/**/predictions.parquet
 .vscode/
+results/**/predictions_validation.parquet
