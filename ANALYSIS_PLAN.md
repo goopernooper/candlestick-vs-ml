@@ -1,6 +1,6 @@
 # Analysis Plan
 
-**Status: DRAFT** (week 4, 2026-10-29; decisions confirmed 2026-11-03). To be frozen and tagged `analysis-plan-frozen` in week 8, before the 2023–2025 holdout is unlocked.
+**Status: DRAFT** (week 4, 2026-10-29; decisions confirmed 2026-11-03; confirmatory holdout hypothesis added 2026-11-25, section 13.1). To be frozen and tagged `analysis-plan-frozen` in week 8, before the 2023–2025 holdout is unlocked.
 
 This document fixes, before the final results are seen, exactly what will be run and how it will be judged. Once frozen, nothing in it changes. Any later deviation is listed in the Deviations section at the end with its date and reason, and is reported in the paper.
 
@@ -173,6 +173,35 @@ Robustness results are reported whether or not they agree with the main results.
 2. Set `unlock_holdout: true` in `config.yaml` and log it in DECISIONS.md.
 3. Run the frozen pipeline once on 2023–2025 and commit the results, whatever they show.
 4. No model, setting or feature is changed after seeing the holdout. If a bug is found afterwards, it is fixed and both the original and corrected holdout results are reported.
+
+### 13.1 Confirmatory hypothesis: confident days beat reversal (D-029)
+
+Development results (2005–2022) showed that, on their 10% most confident stock-days, six models had a higher MCC than the reversal baseline scored on the same stock-days, with 95% bootstrap intervals above zero (`results/v4/coverage_vs_reversal.csv`, D-028). That finding was exploratory: the comparison was chosen after the coverage curves were seen, and the six models were picked because their intervals cleared zero. The 2023–2025 holdout is used to test it on data that played no part in choosing it.
+
+**Models** (fixed now, chosen from development results): `svm_ohlc`, `rf_b`, `lightgbm_b`, `knn_b3`, `mlp_ohlc`, `lightgbm_ohlc`.
+
+**Statistic.** For model *m*:
+
+> Δₘ = MCC of *m* on its selected holdout stock-days − MCC of `reversal` on exactly the same stock-days,
+
+where the selected stock-days are those whose confidence |P(up) − 0.5| is at or above a cutoff that would have selected the top 10% of that fold's validation-year stock-days. The procedure is section 10's, unchanged:
+- The holdout folds are 2023, 2024 and 2025. Each fold's validation year is the year before (2022, 2023, 2024).
+- The validation-year predictions come from the model fitted on the fold's training window minus that year, with the fold's settings: the 2020 retune for the 2023 and 2024 folds, and the 2025 retune for the 2025 fold (section 6).
+- MCC is pooled over the labelled stock-days selected in all three holdout years.
+
+**Primary test (H1), one test.** The average of the six differences, Δ̄ = (1/6) Σₘ Δₘ, is greater than zero.
+- One-sided test at α = 0.05.
+- The p-value is the share of bootstrap replications in which Δ̄ ≤ 0. The bootstrap is the stationary bootstrap of section 8 item 5: whole dates, mean block length 20 trading days, 10,000 replications, the same resampled dates for all six models.
+- Development estimate: Δ̄ = 0.038.
+
+**Secondary tests (H2), per model.** For each of the six models, Δₘ > 0, one-sided, with the same bootstrap p-values, and the Holm–Bonferroni correction across the six at a family-wise α = 0.05.
+
+**Interpretation, fixed now.**
+- If H1 is rejected, the paper reports that the development finding was confirmed out of sample: on their most confident days, these candle-based models beat short-term reversal on the same days.
+- If H1 is not rejected, the paper reports that it was not confirmed. The holdout is small: from the development intervals, each Δₘ will have a standard error of about 0.03 on three years, and the expected power of H1 is below 50% even if the development estimates are accurate. Development estimates of models selected for looking good are likely to be too high, so the true power is probably lower. A non-rejection is therefore reported as inconclusive, not as evidence against the effect, with the holdout estimates and their 95% intervals in full.
+- H2 results are reported for all six models, whichever way they come out.
+
+**Trading on confident days (secondary, descriptive).** For each of the six models and for `reversal`, a long/short portfolio holds positions only on that model's selected stock-days. Each selected stock-day gets an equal weight within its date; a date with no selected stock-day is held in cash. Positions run from close to close, costs are 5 bps per side, and reversal is traded on exactly the same stock-days as the model it is compared with. The report gives annual return, Sharpe ratio and break-even cost, on the development years (before the holdout is unlocked) and on the holdout. No significance test is attached, and no claim is based on it.
 
 ## 14. Deviations after freezing
 

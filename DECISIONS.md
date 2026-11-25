@@ -43,6 +43,7 @@ Professor Danisman gave full latitude on design, so entries marked "Decided by: 
 | D-026 | Replication of Caginalp & Laurent's patterns (post hoc, descriptive) | Decided | 2026-11-09 |
 | D-027 | Balanced misclassification as the classification loss | Decided | 2026-11-24 |
 | D-028 | Coverage curves: compare with reversal on the same stock-days (post hoc) | Decided | 2026-11-25 |
+| D-029 | Confirmatory holdout hypothesis: confident days beat reversal | Decided | 2026-11-25 |
 
 ---
 
@@ -273,6 +274,21 @@ Fill in **Decided** during the meeting, update the index, and commit.
 - **Decision:** For each model and target coverage, score the reversal baseline on exactly the stock-days the model acts on, and give the difference in MCC a 95% stationary-bootstrap interval over dates (mean block 20 days, 10,000 replications, the same resampled dates for every model and target). Written to results/<version>/coverage_vs_reversal.csv and .png by src/coverage.py.
 - **Why:** In the v4 coverage curves, every candle-based model's MCC rose as it acted on fewer, more confident days (to 0.045–0.097 on its top 10%), while reversal, which gives every day the same confidence, stayed at 0.024. Comparing the two on different days does not show whether the models add anything: their confident days might be exactly the days on which reversal works best, such as after large moves. Scoring reversal on the same days answers that.
 - **Post hoc:** Added after seeing the v4 coverage curves, before the analysis plan was frozen. Reported as such.
+
+
+### D-029: Confirmatory holdout hypothesis: confident days beat reversal
+- **Status:** Decided, 2026-11-25. Decided by: Joshua.
+- **Decision:** ANALYSIS_PLAN.md section 13.1 fixes, before the holdout is unlocked, one confirmatory test on 2023–2025.
+  - The test: the average, over six pre-named models (svm_ohlc, rf_b, lightgbm_b, knn_b3, mlp_ohlc, lightgbm_ohlc), of each model's MCC on its 10% most confident stock-days minus reversal's MCC on the same stock-days, is greater than zero. One-sided, α = 0.05, stationary-bootstrap p-value.
+  - Secondary: each model separately, with a Holm–Bonferroni correction across the six.
+  - Descriptive: a backtest of trading only on the confident stock-days.
+  - The plan also fixes in advance how each outcome will be reported.
+- **Why:** The development finding of D-028 is exploratory: the comparison and the six models were both chosen after seeing the results. The locked holdout is the only data on which it can be tested honestly. A single averaged statistic is the primary test because the holdout is small. From the development intervals, each model's difference will have a standard error of about 0.03 on three years. Tested separately with Holm, even the strongest model would have only about 27% power if its development estimate were accurate. The average uses all six models in one test.
+- **Expected power:** below 50%, and probably lower, since estimates for models selected because they looked good tend to be too high. A non-rejection is reported as inconclusive, not as evidence against the effect.
+- **Alternatives considered:**
+  - Testing each model separately as the primary test (too little power).
+  - Choosing one best model (svm_ohlc) as the only test, which has more power for that model but discards the consistency across six models that made the finding interesting.
+  - Adding the 25% and 50% coverage levels (more tests, and the 10% level is where the development effect was clearest).
 
 ---
 
