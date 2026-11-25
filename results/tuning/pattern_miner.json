@@ -735,6 +735,181 @@
         }
       ],
       "git_commit": "e3b88ad"
+    },
+    "2025": {
+      "params": {
+        "shrinkage_m": 647.4002360090086,
+        "min_count": 78
+      },
+      "mcc": 0.015984140401868508,
+      "default_mcc": -0.010937130261832,
+      "fit_days": 110748,
+      "tune_days": 4930,
+      "tuning_set": "2024-01-02 to 2024-12-30",
+      "seconds": 0.3,
+      "trials": [
+        {
+          "number": 0,
+          "mcc": -0.010937130261832,
+          "params": {
+            "shrinkage_m": 100.0,
+            "min_count": 30
+          }
+        },
+        {
+          "number": 1,
+          "mcc": -0.01332394032099518,
+          "params": {
+            "shrinkage_m": 35.492084737337414,
+            "min_count": 43
+          }
+        },
+        {
+          "number": 2,
+          "mcc": 0.015583398219089327,
+          "params": {
+            "shrinkage_m": 717.4776041840862,
+            "min_count": 5
+          }
+        },
+        {
+          "number": 3,
+          "mcc": -0.011683257467775076,
+          "params": {
+            "shrinkage_m": 494.6804435365252,
+            "min_count": 399
+          }
+        },
+        {
+          "number": 4,
+          "mcc": -0.010405820208380726,
+          "params": {
+            "shrinkage_m": 25.82310470863252,
+            "min_count": 10
+          }
+        },
+        {
+          "number": 5,
+          "mcc": -0.020312950474459066,
+          "params": {
+            "shrinkage_m": 44.09701698717837,
+            "min_count": 186
+          }
+        },
+        {
+          "number": 6,
+          "mcc": 0.015984140401868508,
+          "params": {
+            "shrinkage_m": 647.4002360090086,
+            "min_count": 78
+          }
+        },
+        {
+          "number": 7,
+          "mcc": -0.0016647214842153597,
+          "params": {
+            "shrinkage_m": 1.798817375534624,
+            "min_count": 6
+          }
+        },
+        {
+          "number": 8,
+          "mcc": -0.017186171045865718,
+          "params": {
+            "shrinkage_m": 87.57559892165115,
+            "min_count": 111
+          }
+        },
+        {
+          "number": 9,
+          "mcc": -0.01263359291053579,
+          "params": {
+            "shrinkage_m": 281.64987370816107,
+            "min_count": 15
+          }
+        },
+        {
+          "number": 10,
+          "mcc": -0.023074266442790346,
+          "params": {
+            "shrinkage_m": 2.196774833514041,
+            "min_count": 171
+          }
+        },
+        {
+          "number": 11,
+          "mcc": 0.0031422768530795352,
+          "params": {
+            "shrinkage_m": 711.6606147898981,
+            "min_count": 10
+          }
+        },
+        {
+          "number": 12,
+          "mcc": 0.005004356694882999,
+          "params": {
+            "shrinkage_m": 752.9711850759694,
+            "min_count": 85
+          }
+        },
+        {
+          "number": 13,
+          "mcc": -0.01983982165015655,
+          "params": {
+            "shrinkage_m": 52.72559613267782,
+            "min_count": 5
+          }
+        },
+        {
+          "number": 14,
+          "mcc": -0.0016477717434131896,
+          "params": {
+            "shrinkage_m": 359.0155339410292,
+            "min_count": 5
+          }
+        },
+        {
+          "number": 15,
+          "mcc": -0.013026499707292256,
+          "params": {
+            "shrinkage_m": 123.68098637353658,
+            "min_count": 345
+          }
+        },
+        {
+          "number": 16,
+          "mcc": 0.005048591677319902,
+          "params": {
+            "shrinkage_m": 750.6432684624313,
+            "min_count": 38
+          }
+        },
+        {
+          "number": 17,
+          "mcc": -0.011509030648337311,
+          "params": {
+            "shrinkage_m": 6.917550871462181,
+            "min_count": 78
+          }
+        },
+        {
+          "number": 18,
+          "mcc": 0.004921058690891786,
+          "params": {
+            "shrinkage_m": 698.7319338630906,
+            "min_count": 191
+          }
+        },
+        {
+          "number": 19,
+          "mcc": -0.016086425623139146,
+          "params": {
+            "shrinkage_m": 269.67595607308397,
+            "min_count": 35
+          }
+        }
+      ],
+      "git_commit": "f8d8044"
     }
   }
 }

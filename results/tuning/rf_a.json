@@ -797,6 +797,181 @@
         }
       ],
       "git_commit": "e3b88ad"
+    },
+    "2025": {
+      "params": {
+        "min_samples_leaf": 825,
+        "max_features": "sqrt"
+      },
+      "mcc": 0.01930771319819128,
+      "default_mcc": 0.01202895698771695,
+      "fit_days": 110748,
+      "tune_days": 4930,
+      "tuning_set": "2024-01-02 to 2024-12-30",
+      "seconds": 78.1,
+      "trials": [
+        {
+          "number": 0,
+          "mcc": 0.01202895698771695,
+          "params": {
+            "min_samples_leaf": 500,
+            "max_features": "sqrt"
+          }
+        },
+        {
+          "number": 1,
+          "mcc": -0.020953185580291297,
+          "params": {
+            "min_samples_leaf": 335,
+            "max_features": 0.25
+          }
+        },
+        {
+          "number": 2,
+          "mcc": -0.012962894539089744,
+          "params": {
+            "min_samples_leaf": 1673,
+            "max_features": 1.0
+          }
+        },
+        {
+          "number": 3,
+          "mcc": -0.012962894539089744,
+          "params": {
+            "min_samples_leaf": 1585,
+            "max_features": 1.0
+          }
+        },
+        {
+          "number": 4,
+          "mcc": -0.020952135169913597,
+          "params": {
+            "min_samples_leaf": 615,
+            "max_features": 0.5
+          }
+        },
+        {
+          "number": 5,
+          "mcc": -0.007743149686507699,
+          "params": {
+            "min_samples_leaf": 66,
+            "max_features": "sqrt"
+          }
+        },
+        {
+          "number": 6,
+          "mcc": -0.018715131145853384,
+          "params": {
+            "min_samples_leaf": 1374,
+            "max_features": 0.5
+          }
+        },
+        {
+          "number": 7,
+          "mcc": -0.031193157549949505,
+          "params": {
+            "min_samples_leaf": 1944,
+            "max_features": 0.25
+          }
+        },
+        {
+          "number": 8,
+          "mcc": -0.01732982097127339,
+          "params": {
+            "min_samples_leaf": 427,
+            "max_features": 1.0
+          }
+        },
+        {
+          "number": 9,
+          "mcc": -0.007602080358340448,
+          "params": {
+            "min_samples_leaf": 240,
+            "max_features": "sqrt"
+          }
+        },
+        {
+          "number": 10,
+          "mcc": -0.015126737311130513,
+          "params": {
+            "min_samples_leaf": 75,
+            "max_features": 0.5
+          }
+        },
+        {
+          "number": 11,
+          "mcc": -0.006839182141780765,
+          "params": {
+            "min_samples_leaf": 218,
+            "max_features": "sqrt"
+          }
+        },
+        {
+          "number": 12,
+          "mcc": -0.010896476063114483,
+          "params": {
+            "min_samples_leaf": 192,
+            "max_features": "sqrt"
+          }
+        },
+        {
+          "number": 13,
+          "mcc": 0.01930771319819128,
+          "params": {
+            "min_samples_leaf": 825,
+            "max_features": "sqrt"
+          }
+        },
+        {
+          "number": 14,
+          "mcc": 0.0018060335906271026,
+          "params": {
+            "min_samples_leaf": 911,
+            "max_features": "sqrt"
+          }
+        },
+        {
+          "number": 15,
+          "mcc": 0.01202895698771695,
+          "params": {
+            "min_samples_leaf": 514,
+            "max_features": "sqrt"
+          }
+        },
+        {
+          "number": 16,
+          "mcc": -0.011675423209907144,
+          "params": {
+            "min_samples_leaf": 91,
+            "max_features": 0.25
+          }
+        },
+        {
+          "number": 17,
+          "mcc": -0.01151063165158576,
+          "params": {
+            "min_samples_leaf": 1008,
+            "max_features": 0.25
+          }
+        },
+        {
+          "number": 18,
+          "mcc": -0.004742102374680273,
+          "params": {
+            "min_samples_leaf": 133,
+            "max_features": 1.0
+          }
+        },
+        {
+          "number": 19,
+          "mcc": -0.018541766192373785,
+          "params": {
+            "min_samples_leaf": 822,
+            "max_features": 1.0
+          }
+        }
+      ],
+      "git_commit": "f8d8044"
     }
   }
 }
