@@ -126,8 +126,26 @@ def experiments() -> dict:
     return spec
 
 
+# Settings that count training days. Per-stock training has about 1/22 of the
+# pooled training days, so these are divided by the number of stocks (with a
+# floor); everything else keeps its tuned value (ANALYSIS_PLAN.md section 12).
+COUNT_SETTINGS = {"min_child_samples": 5, "min_samples_leaf": 1, "min_count": 1, "k": 1, "shrinkage_m": 0.0}
+
+
+def per_stock_settings(settings: dict, n_stocks: int) -> dict:
+    out = {}
+    for key, value in settings.items():
+        if key in COUNT_SETTINGS:
+            scaled = value / n_stocks
+            floor = COUNT_SETTINGS[key]
+            out[key] = max(floor, scaled) if isinstance(value, float) else max(int(floor), int(round(scaled)))
+        else:
+            out[key] = value
+    return out
+
+
 def run_experiments(table: pd.DataFrame, folds, specs: dict, progress=None,
-                    diagnostics: list | None = None) -> pd.DataFrame:
+                    diagnostics: list | None = None, per_stock: bool = False) -> pd.DataFrame:
     """The predictions table described in evaluate.py, for every model and fold.
 
     Each model trains only on its own feature columns, on training days with a
@@ -137,6 +155,10 @@ def run_experiments(table: pd.DataFrame, folds, specs: dict, progress=None,
     If a list is passed as `diagnostics`, every model with a diagnostics()
     method adds one dict per fold to it (model, test_year, and what the model
     reports about itself on that fold's test days).
+
+    With per_stock=True, each stock gets its own model, trained only on that
+    stock's training days (robustness check, ANALYSIS_PLAN.md section 12); a
+    k-NN model's k is capped at that stock's number of training days.
     """
     out = []
     for fold in folds:
@@ -147,9 +169,21 @@ def run_experiments(table: pd.DataFrame, folds, specs: dict, progress=None,
             test = test_all[test_all[cols].notna().all(axis=1)]
             if test.empty:
                 continue
-            model = sp["make"](fold).fit(train[cols], train["up"].astype(int))
-            p = np.asarray(model.predict_proba(test[cols]), dtype=float)
-            if diagnostics is not None and hasattr(model, "diagnostics"):
+            if per_stock:
+                p = np.full(len(test), np.nan)
+                tickers = test["ticker"].to_numpy()
+                for ticker in np.unique(tickers):
+                    tr = train[train["ticker"] == ticker]
+                    model = sp["make"](fold)
+                    if hasattr(model, "k"):
+                        model.k = min(model.k, len(tr))
+                    model.fit(tr[cols], tr["up"].astype(int))
+                    rows = tickers == ticker
+                    p[rows] = np.asarray(model.predict_proba(test.loc[rows, cols]), dtype=float)
+            else:
+                model = sp["make"](fold).fit(train[cols], train["up"].astype(int))
+                p = np.asarray(model.predict_proba(test[cols]), dtype=float)
+            if diagnostics is not None and not per_stock and hasattr(model, "diagnostics"):
                 diagnostics.append({"model": name, "test_year": fold.test_year,
                                     **model.diagnostics(test[cols])})
             out.append(test[["ticker", "up", "fwd_return"]].assign(
@@ -220,7 +254,20 @@ def main() -> int:
                         help="use the settings in config.yaml (models) instead of tuning")
     parser.add_argument("--retune", action="store_true",
                         help="tune again even if results/tuning/ has a matching cached result")
+    parser.add_argument("--frozen-settings", action="store_true",
+                        help="use the saved tuned settings in results/tuning/ as they are, never "
+                             "tuning (robustness runs)")
+    parser.add_argument("--dead-zone-k", type=float,
+                        help="robustness: dead-zone threshold multiple instead of config.yaml's")
+    parser.add_argument("--per-stock", action="store_true",
+                        help="robustness: train one model per stock instead of pooling")
     args = parser.parse_args()
+    if (args.per_stock or args.dead_zone_k is not None) and not (args.frozen_settings or args.untuned):
+        print("Robustness runs use the main run's settings: add --frozen-settings.")
+        return 1
+    if args.dead_zone_k is not None:
+        # every later load_config() returns this same dictionary, so the labels use it
+        load_config()["labels"]["dead_zone_k"] = args.dead_zone_k
     specs = experiments()
     if args.models:
         unknown = set(args.models) - set(specs)
@@ -246,6 +293,16 @@ def main() -> int:
 
     tuned = {}
     tunable = [] if args.untuned else [name for name, sp in specs.items() if "tune" in sp]
+    if tunable and args.frozen_settings:
+        from tune import cached_settings
+        print(f"Using the saved tuned settings for {len(tunable)} models (no tuning).")
+        for name in tunable:
+            tuned[name] = cached_settings(name, specs[name], folds)
+            if args.per_stock:
+                n = table["ticker"].nunique()
+                tuned[name] = {y: per_stock_settings(p, n) for y, p in tuned[name].items()}
+            specs[name] = with_settings(specs[name], tuned[name])
+        tunable = []
     if tunable:
         print(f"Tuning {len(tunable)} models, {cfg['tuning']['n_trials']} trials per retune year "
               f"(cached in results/tuning/):")
@@ -255,7 +312,7 @@ def main() -> int:
         print()
     print(f"Running {len(specs)} models on {len(folds)} folds: ", end="", flush=True)
     diag = []
-    preds = run_experiments(table, folds, specs, diagnostics=diag,
+    preds = run_experiments(table, folds, specs, diagnostics=diag, per_stock=args.per_stock,
                             progress=lambda f: print(f.test_year, end=" ", flush=True))
     print("\n")
 
@@ -284,6 +341,8 @@ def main() -> int:
         "git_commit": stamp, "run_at": run_at, "folds": [f.test_year for f in folds],
         "models": {name: sp["features"] for name, sp in specs.items()},
         "tuned": sorted(tuned), "untuned": bool(args.untuned),
+        "frozen_settings": bool(args.frozen_settings), "per_stock": bool(args.per_stock),
+        "dead_zone_k": cfg["labels"]["dead_zone_k"],
         "stocks": int(table["ticker"].nunique()), "test_days": int(len(preds) // preds["model"].nunique()),
         "first_date": str(table.index.min().date()), "last_date": str(table.index.max().date()),
         "config": cfg}, indent=2, default=str) + "\n")

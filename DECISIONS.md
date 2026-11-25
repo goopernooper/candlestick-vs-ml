@@ -44,6 +44,7 @@ Professor Danisman gave full latitude on design, so entries marked "Decided by: 
 | D-027 | Balanced misclassification as the classification loss | Decided | 2026-11-24 |
 | D-028 | Coverage curves: compare with reversal on the same stock-days (post hoc) | Decided | 2026-11-25 |
 | D-029 | Confirmatory holdout hypothesis: confident days beat reversal | Decided | 2026-11-25 |
+| D-030 | Robustness checks: details | Decided | 2026-11-25 |
 
 ---
 
@@ -289,6 +290,17 @@ Fill in **Decided** during the meeting, update the index, and commit.
   - Testing each model separately as the primary test (too little power).
   - Choosing one best model (svm_ohlc) as the only test, which has more power for that model but discards the consistency across six models that made the finding interesting.
   - Adding the 25% and 50% coverage levels (more tests, and the 10% level is where the development effect was clearest).
+
+
+### D-030: Robustness checks: details
+- **Status:** Decided, 2026-11-25. Decided by: Joshua.
+- **Decision:** ANALYSIS_PLAN.md section 12 now fixes how each robustness check is run.
+  - **No re-tuning:** every check uses the main run's tuned settings as saved in results/tuning/ (`run.py --frozen-settings`).
+  - **Per-stock training:** covers the baselines and six models (svm_b, lightgbm_b, rf_b, svm_ohlc, pattern_miner, knn_b3). Settings that count training days are divided by 22.
+  - **Next-day open:** re-trades the main predictions at the next day's open-to-close return.
+  - **Dead zone:** retrains all models at 0 and 0.2 × volatility.
+- **Why:** Re-tuning each check would mix the effect of the change with the effect of new settings, and would cost 20 trials per model again. Count-based settings tuned on about 100,000 pooled training days would make a per-stock model of about 700–5,000 days useless (k-NN's *k* up to about 950, leaves of up to 2,000 days), so they are scaled by the ratio of the data sizes. Per-stock training covers six models rather than all sixteen to keep the run short. The six are the strongest models of each family and both pattern models.
+- **Timing:** fixed before any robustness result was seen.
 
 ---
 

@@ -198,3 +198,24 @@ def settings_table(all_settings: dict) -> pd.DataFrame:
                                                   for k, v in params.items()}}
             for name, by_year in all_settings.items() for year, params in sorted(by_year.items())]
     return pd.DataFrame(rows)
+
+
+def cached_settings(name: str, spec: dict, folds, cache_dir: Path | None = CACHE_DIR) -> dict:
+    """{test_year: settings} from the saved tuning results, without tuning and
+    without checking the rest of the setup: for robustness runs that must use
+    exactly the main run's settings even though, say, the labels differ. The
+    feature columns must still match."""
+    path = Path(cache_dir) / f"{name}.json"
+    if not path.exists():
+        raise FileNotFoundError(f"{path} not found: run the main tuned run first")
+    saved = json.loads(path.read_text())
+    if saved["setup"].get("features") != list(spec["features"]):
+        raise ValueError(f"{name}: the saved settings were tuned on different feature columns")
+    years = load_config()["tuning"]["retune_years"]
+    out = {}
+    for f in folds:
+        year = str(retune_year_for(f.test_year, years))
+        if year not in saved["years"]:
+            raise ValueError(f"{name}: no saved settings for the {year} retune")
+        out[f.test_year] = saved["years"][year]["params"]
+    return out

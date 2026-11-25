@@ -166,12 +166,20 @@ Consistency across years (the number of the 18 folds in which the model beats th
 
 ## 12. Robustness checks
 
-1. Per-stock training instead of pooled.
-2. Positions entered at the next day's open instead of day *t*'s close.
-3. Dead-zone threshold of 0 and of twice the default.
-4. VIX-based regimes.
+1. **Per-stock training instead of pooled.**
+   - Models: the baselines, `svm_b`, `lightgbm_b`, `rf_b`, `svm_ohlc`, `pattern_miner` and `knn_b3`.
+   - Each stock gets its own model in each fold, trained only on that stock's training days.
+   - Settings are the main run's tuned settings, with no re-tuning, except that settings which count training days are divided by the number of stocks (22), since each model sees about 1/22 of the pooled data. These are LightGBM's minimum leaf size (floor 5), the random forest's minimum leaf size (floor 1), the pattern miner's minimum count (floor 1) and shrinkage weight, and k-NN's *k* (floor 1, and at most the stock's number of training days).
+   - Run: `python src/run.py --version v4_perstock --per-stock --frozen-settings --models …`.
+2. **Positions entered at the next day's open instead of day *t*'s close.**
+   - The main run's predictions are used unchanged; only the backtest changes. A position decided at the close of day *t* is entered at the open of day *t* + 1 and held to the close of *t* + 1 (return Close(*t*+1)/Open(*t*+1) − 1), so the overnight move is missed.
+   - All models, both strategies, the same costs and cost grid. Reported: Sharpe ratio, annual return, break-even cost and market exposure (`python src/robustness_open.py v4`).
+3. **Dead-zone threshold of 0 and of twice the default.**
+   - All models are retrained with the labels of each setting (dead-zone multiple 0 and 0.2) and the main run's tuned settings, with no re-tuning (`python src/run.py --version v4_dz0 --dead-zone-k 0 --frozen-settings`, likewise `v4_dz2` with 0.2).
+   - MCC and the section 8–9 tests are computed against each setting's own labels.
+4. **VIX-based regimes** (section 11).
 
-Robustness results are reported whether or not they agree with the main results.
+Each check is reported with the same metrics and the section 9 verdicts as the main results (`python src/significance.py <version>`; `python src/robustness.py v4 v4_dz0 v4_dz2 v4_perstock` puts them side by side). Robustness results are reported whether or not they agree with the main results.
 
 ## 13. Holdout protocol
 
