@@ -35,7 +35,7 @@ MCC and the balanced loss used in the tests (Section 8) rank the support vector 
 
 ### 9.3 What carries the signal
 
-**Candle shape over several days, not named patterns.** Table 5 compares each machine learning model across the three encodings. Encoding B is the best or equal-best input for every model. The 61 TA-Lib pattern indicators of encoding A give the lowest MCC for three of the four models, and for the support vector machine almost none (0.002). That model predicted an up day on 89% of days: standardizing sparse indicator columns, which are zero on most days, gives the rare non-zero values extreme magnitudes, which distorts the kernel distances. Named patterns add little that the models can use.
+**Candle shape over several days, not named patterns.** Table 5 and Figure 1 compare each machine learning model across the three encodings. Encoding B is the best or equal-best input for every model. The 61 TA-Lib pattern indicators of encoding A give the lowest MCC for three of the four models, and for the support vector machine almost none (0.002). That model predicted an up day on 89% of days: standardizing sparse indicator columns, which are zero on most days, gives the rare non-zero values extreme magnitudes, which distorts the kernel distances. Named patterns add little that the models can use.
 
 **The same information, described two ways.** Encoding B and normalized prices over the same three days contain identical information (Section 4.4). For the support vector machine and the multilayer perceptron, the two give the same MCC (0.033 and 0.033; 0.021 and 0.021). The tree-based models do better with encoding B (LightGBM 0.030 against 0.016; random forest 0.027 against 0.022), plausibly because trees split on one feature at a time, and body and wick lengths are differences of prices that a tree would otherwise have to approximate with many splits. Describing candles by their shape helps models that cannot form such differences themselves; it adds no information.
 
@@ -54,11 +54,15 @@ MCC and the balanced loss used in the tests (Section 8) rank the support vector 
 | Pattern miner (symbolic B) | | 0.018 | |
 | k-NN, 3 / 5 days | | 0.017 / 0.015 | |
 
+![Figure 1](../results/v4/figure_grid.png)
+
+**Figure 1. MCC by model and encoding, 2005–2022.** Darker cells are more accurate; bold marks each model's best encoding. The black line on the colour scale marks the reversal baseline (0.023), which none of the models beats significantly.
+
 ### 9.4 Trading results, costs and market exposure
 
 Before costs, almost every candle-based strategy beats buy-and-hold: long/short returns reach 26.5% a year for the support vector machine on encoding B against 14.9% for an equal-weighted buy-and-hold portfolio of the 22 stocks. Costs change the picture. At 5 basis points per side, only the two support vector machines still earn more than buy-and-hold (18.7% and 16.6% a year; Sharpe ratios 1.25 [0.85, 1.65] and 1.12 [0.73, 1.53], against 0.82), and neither difference is significant (*p* = 0.44 and 0.83). The economic Model Confidence Set contains just these two models and buy-and-hold, and the SPA test finds no evidence that any strategy beats buy-and-hold (*p* = 0.41). Most strategies are significantly worse than buy-and-hold, including the pattern miner (*p* < 0.001).
 
-**Break-even costs** (Table 6) depend as much on how often a strategy trades as on how accurate it is. The support vector machines trade about 120–130 times a year per stock and break even at about 18 basis points per side; LightGBM and the random forest on encoding B trade about 200 times and break even at 9–10; the pattern miner and k-NN, at about 215 trades, at 6–7; and reversal, which changes position on nearly every day (257 trades a year), at 3.2. Reversal therefore loses money at the headline cost (−4.6% a year) despite having one of the highest MCCs.
+**Break-even costs** (Table 6 and Figure 2) depend as much on how often a strategy trades as on how accurate it is. The support vector machines trade about 120–130 times a year per stock and break even at about 18 basis points per side; LightGBM and the random forest on encoding B trade about 200 times and break even at 9–10; the pattern miner and k-NN, at about 215 trades, at 6–7; and reversal, which changes position on nearly every day (257 trades a year), at 3.2. Reversal therefore loses money at the headline cost (−4.6% a year) despite having one of the highest MCCs.
 
 **Market exposure.** Because most models predict up days more often than down days, their long/short portfolios are net long, with market betas mostly between 0.31 and 0.61. Regressing each strategy's returns on buy-and-hold's (Section 8) separates the return a strategy earns from the return it gets for being long. Only the two support vector machines and LightGBM on encoding B earn significantly more than their market exposure explains (*t* = 3.38, 2.81 and 2.04). For the long/flat strategy, the comparison with buy-and-hold is mathematically the same test as for long/short: a long/flat position is the average of a long/short position and buy-and-hold, so its difference from buy-and-hold is exactly half the long/short difference, costs included, and the two give identical *p*-values.
 
@@ -75,13 +79,25 @@ Before costs, almost every candle-based strategy beats buy-and-hold: long/short 
 | *Reversal* | *−4.6%* | *−0.29 [−0.83, 0.16]* | *3.2* | *0.14* | *−2.08* |
 | *Buy-and-hold* | *14.9%* | *0.82 [0.42, 1.28]* | *no limit* | *1.00* | — |
 
+![Figure 2](../results/v4/figure_cost_curve.png)
+
+**Figure 2. Long/short annual return against transaction cost, 2005–2022.** Each line crosses zero at the model's break-even cost. The dashed line is buy-and-hold; the dotted vertical line marks the headline cost of 5 basis points per side.
+
 ### 9.5 The most confident predictions
 
-A model's edge may be concentrated in the days it is most sure about, where the pooled MCC would hide it (Section 5.3). Following the coverage analysis of Section 8, confidence cutoffs set on each fold's validation year were applied unchanged to its test year. For every candle-based model, MCC rises as the model acts on fewer, more confident stock-days ([Figure X]). On their 10% most confident stock-days, the support vector machine on normalized prices reaches an MCC of 0.097, the random forest, support vector machine and LightGBM on encoding B 0.064–0.067, and the pattern miner and three-day k-NN 0.046 and 0.045. LightGBM given only today's return stays flat (0.019): knowing only the size of today's move does not identify better days.
+A model's edge may be concentrated in the days it is most sure about, where the pooled MCC would hide it (Section 5.3). Following the coverage analysis of Section 8, confidence cutoffs set on each fold's validation year were applied unchanged to its test year. For every candle-based model, MCC rises as the model acts on fewer, more confident stock-days (Figure 3). On their 10% most confident stock-days, the support vector machine on normalized prices reaches an MCC of 0.097, the random forest, support vector machine and LightGBM on encoding B 0.064–0.067, and the pattern miner and three-day k-NN 0.046 and 0.045. LightGBM given only today's return stays flat (0.019): knowing only the size of today's move does not identify better days.
 
-Because a model's confident days might simply be days on which reversal works unusually well, reversal was scored on exactly the stock-days each model chose. On their 10% most confident days, six models beat reversal on the same days with intervals above zero: the support vector machine on normalized prices (+0.058 [0.032, 0.084]), the random forest on encoding B (+0.044 [0.022, 0.066]), LightGBM on encoding B (+0.039 [0.012, 0.066]), the three-day k-NN (+0.032 [0.008, 0.057]), and the multilayer perceptron and LightGBM on normalized prices (+0.029 and +0.025, with lower limits of 0.001). Reversal's own MCC on those days (0.013–0.049) was close to its overall level, so the models were not merely choosing days on which reversal works. Trading only on its confident days, the support vector machine on normalized prices earned 19.2% a year (Sharpe 0.89, break-even 10.4 basis points), against −5.9% for reversal on the same days.
+Because a model's confident days might simply be days on which reversal works unusually well, reversal was scored on exactly the stock-days each model chose (Figure 4). On their 10% most confident days, six models beat reversal on the same days with intervals above zero: the support vector machine on normalized prices (+0.058 [0.032, 0.084]), the random forest on encoding B (+0.044 [0.022, 0.066]), LightGBM on encoding B (+0.039 [0.012, 0.066]), the three-day k-NN (+0.032 [0.008, 0.057]), and the multilayer perceptron and LightGBM on normalized prices (+0.029 and +0.025, with lower limits of 0.001). Reversal's own MCC on those days (0.013–0.049) was close to its overall level, so the models were not merely choosing days on which reversal works. Trading only on its confident days, the support vector machine on normalized prices earned 19.2% a year (Sharpe 0.89, break-even 10.4 basis points), against −5.9% for reversal on the same days.
 
-This comparison was added after the coverage curves had been seen (D-028) and the six models were selected because their intervals cleared zero, so it is exploratory. It was therefore registered, before the holdout was unlocked, as the paper's confirmatory hypothesis (Section 9.8).
+This comparison was added after the coverage curves had been seen and the six models were selected because their intervals cleared zero, so it is exploratory. It was therefore registered, before the holdout was unlocked, as the paper's confirmatory hypothesis (Section 9.8).
+
+![Figure 3](../results/v4/figure_coverage.png)
+
+**Figure 3. MCC on the stock-days each model is most confident about, 2005–2022.** Moving left, each model acts only on its most confident stock-days, using cutoffs set on the fold's validation year. Grey lines are the remaining models. Reversal has no measure of confidence and acts on every day.
+
+![Figure 4](../results/v4/figure_confident.png)
+
+**Figure 4. Each model against reversal on its 10% most confident stock-days, 2005–2022.** Points are the difference between the model's MCC and reversal's MCC on the same stock-days, with 95% stationary-bootstrap intervals over dates. Filled points have intervals above zero. This comparison is exploratory; it became the confirmatory test of Section 9.8.
 
 ### 9.6 Volatility regimes and episodes
 
@@ -89,7 +105,11 @@ Predictability rises with volatility. Reversal's MCC is 0.017 on low-volatility 
 
 In trading terms, one result stands out: on high-volatility days, the support vector machine on encoding B beat buy-and-hold significantly (Sharpe 1.66 against 0.63, *p* = 0.03), and the result holds when regimes are defined by the VIX (1.97 against 0.84). It is one of about 96 regime comparisons, however, and would not survive a correction for multiple testing.
 
-**A single episode drives much of the high-volatility advantage.** The 2008–09 financial crisis accounts for 27% of high-volatility days (392 of 1,449), the 2022 bear market for 16%, the 2020 pandemic crash for 12%, the 2011 debt-ceiling crisis for 7%, and scattered days in other years for 38% ([Figure X]). Leaving out 2008–09 roughly halves most models' high-volatility MCC (the support vector machine on encoding B from 0.049 to 0.027, LightGBM on encoding B from 0.036 to 0.021, the three-day k-NN from 0.022 to 0.005), while reversal falls less (0.027 to 0.020). Without that one crisis, most models fall below reversal on high-volatility days. The episodes also differ in kind: in 2008–09 and 2020, crashes followed by sharp rebounds, the candle models do best (MCC 0.05–0.10); in 2011 reversal is strongest (0.077); and in 2022, a steady, trending decline, reversal fails (−0.032) and most models are near zero. The support vector machine's trading advantage in turbulent markets also rests mostly on 2008–09, when buy-and-hold had a Sharpe ratio of 0.14: without it, the gap shrinks from 1.03 to 0.33.
+**A single episode drives much of the high-volatility advantage.** The 2008–09 financial crisis accounts for 27% of high-volatility days (392 of 1,449), the 2022 bear market for 16%, the 2020 pandemic crash for 12%, the 2011 debt-ceiling crisis for 7%, and scattered days in other years for 38% (Figure 5). Leaving out 2008–09 roughly halves most models' high-volatility MCC (the support vector machine on encoding B from 0.049 to 0.027, LightGBM on encoding B from 0.036 to 0.021, the three-day k-NN from 0.022 to 0.005), while reversal falls less (0.027 to 0.020). Without that one crisis, most models fall below reversal on high-volatility days. The episodes also differ in kind: in 2008–09 and 2020, crashes followed by sharp rebounds, the candle models do best (MCC 0.05–0.10); in 2011 reversal is strongest (0.077); and in 2022, a steady, trending decline, reversal fails (−0.032) and most models are near zero. The support vector machine's trading advantage in turbulent markets also rests mostly on 2008–09, when buy-and-hold had a Sharpe ratio of 0.14: without it, the gap shrinks from 1.03 to 0.33.
+
+![Figure 5](../results/v4/figure_episodes.png)
+
+**Figure 5. MCC on high-volatility days by episode (left) and with each episode left out (right), 2005–2022.** The models' advantage on high-volatility days rests largely on 2008–09; reversal failed in the steady decline of 2022.
 
 ### 9.7 Robustness
 
@@ -140,7 +160,7 @@ Caginalp and Laurent reported that eight three-day reversal patterns predicted S
 
 The patterns did not work. Bullish patterns were followed by a rise 51.3% of the time, slightly *below* the 54.0% base rate for days in the same trend (their Z = −2.1), against 71% versus 45% (Z = 36) in the original study; bearish patterns were followed by a fall 46.8% of the time against a base rate of 47.0% (Z = −0.2), against 67% versus 53% (Z = 27). No individual pattern approaches significance on the date-averaged test that allows for signals on the same day moving together (all |*t*| < 1.5), the result holds in both halves of the period, and it is the same with TA-Lib's definitions of the patterns, with or without the trend condition. After costs, every pattern loses money (−4 to −53 basis points per trade).
 
-This is not a failure to detect a real effect. With about 1,500 bullish signals, an effect of the original size would produce a Z statistic of roughly 13 here. The effect itself is absent. Several differences may explain why the original study found it: a five-year sample in a strong bull market, a broader universe including smaller stocks, a significance test that treats every signal as independent, and the tendency of published return anomalies to weaken after publication.
+This is not a failure to detect a real effect. With about 1,500 bullish signals, an effect of the original size would produce a Z statistic of roughly 13 here. The effect itself is absent. Several differences may explain why the original study found it: a five-year sample in a strong bull market, a broader universe including smaller stocks, a significance test that treats every signal as independent, and the tendency of published return anomalies to weaken after publication (McLean & Pontiff, 2016).
 
 **Table 9. Caginalp and Laurent's patterns: original study and replication** (outcome: the average of the next three closes against the pattern's last close)
 
@@ -156,3 +176,4 @@ This is not a failure to detect a real effect. With about 1,500 bullish signals,
 ### References for this section
 
 - Caginalp, G., & Laurent, H. (1998). The predictive power of price patterns. *Applied Mathematical Finance*, 5(3–4), 181–205.
+- McLean, R. D., & Pontiff, J. (2016). Does academic research destroy stock return predictability? *Journal of Finance*, 71(1), 5–32.

@@ -1,21 +1,27 @@
-"""Paper figures from committed results: the model x encoding grid and the cost curve.
+"""Paper figures from committed results.
 
 Usage
 -----
     python src/figures.py v4
 
-Reads results/<version>/summary.csv and backtest.csv (both committed, so this
-runs anywhere) and writes:
+Reads committed results files in results/<version>/ (so this runs anywhere,
+without the raw data) and writes the five paper figures:
 
-  figure_grid.png        MCC of every machine learning model on every encoding,
-                         with the pattern models and the reversal baseline for
-                         reference (paper Section 8.3)
-  figure_cost_curve.png  long/short annual return against the cost per side,
-                         for the main models, reversal and buy-and-hold
-                         (paper Section 8.4)
+  figure_grid.png          Figure 1: MCC of every machine learning model on every
+                           encoding (Section 9.3)
+  figure_cost_curve.png    Figure 2: long/short annual return against the cost
+                           per side (Section 9.4)
+  figure_coverage.png      Figure 3: MCC against the share of stock-days acted on
+                           (Section 9.5; from coverage.csv)
+  figure_confident.png     Figure 4: each model against reversal on its 10% most
+                           confident stock-days (Section 9.5; from
+                           coverage_vs_reversal.csv)
+  figure_episodes.png      Figure 5: high-volatility MCC by episode and with each
+                           episode left out (Section 9.6; from regime_episodes*.csv)
 
-The other figures are written by coverage.py (coverage.png,
-coverage_vs_reversal.png) and regimes.py (regime_episodes.png).
+coverage.py and regimes.py write working versions of Figures 3-5 when their
+analyses run; the versions here use readable model names and the paper's
+colours.
 """
 from __future__ import annotations
 
@@ -39,6 +45,23 @@ COST_MODELS = ["svm_b", "svm_ohlc", "lightgbm_b", "rf_b", "knn_b3", "pattern_min
 NAMES = {"svm_b": "SVM, encoding B", "svm_ohlc": "SVM, normalized prices", "lightgbm_b": "LightGBM, encoding B",
          "rf_b": "Random forest, encoding B", "knn_b3": "k-NN, 3-day", "pattern_miner": "Pattern miner",
          "reversal": "Reversal (baseline)", "buy-and-hold": "Buy-and-hold"}
+# one colour and marker per model, the same in every figure
+STYLE = {**HIGHLIGHT, "svm_ohlc": ("#6250d6", "X")}
+FAMILY = {"lightgbm": "LightGBM", "rf": "Random forest", "svm": "SVM", "mlp": "MLP"}
+ENCODING = {"a": "encoding A", "b": "encoding B", "ohlc": "normalized prices"}
+FOCUS = ["svm_ohlc", "svm_b", "lightgbm_b", "rf_b", "knn_b3", "pattern_miner"]
+BASELINES = {"majority", "always_long", "previous_day", "random", "reversal"}
+
+
+def name(model: str) -> str:
+    """Readable name for any model key, e.g. 'rf_ohlc' -> 'Random forest, normalized prices'."""
+    if model in NAMES:
+        return NAMES[model]
+    fixed = {"knn_b5": "k-NN, 5-day", "lightgbm_today": "LightGBM, today's return only"}
+    if model in fixed:
+        return fixed[model]
+    family, _, enc = model.partition("_")
+    return f"{FAMILY.get(family, family)}, {ENCODING.get(enc, enc)}" if enc else model
 
 
 def _style(plt):
@@ -144,6 +167,136 @@ def cost_figure(backtest: pd.DataFrame, path: Path, title: str, headline: float)
     plt.close(fig)
 
 
+def _clean(ax):
+    ax.grid(True, color=GRID, lw=0.8)
+    ax.set_axisbelow(True)
+    for side in ["top", "right"]:
+        ax.spines[side].set_visible(False)
+
+
+def coverage_figure(coverage: pd.DataFrame, path: Path, title: str) -> None:
+    import matplotlib
+    matplotlib.use("Agg")
+    import matplotlib.pyplot as plt
+    _style(plt)
+    fig, ax = plt.subplots(figsize=(9.2, 4.9), facecolor=SURFACE)
+    ax.set_facecolor(SURFACE)
+    cov = coverage[~coverage["model"].isin(BASELINES)]
+    for m, g in cov.groupby("model"):
+        if m not in FOCUS:
+            g = g.sort_values("coverage")
+            ax.plot(g["coverage"] * 100, g["mcc"], color="#b9b8b4", lw=1, zorder=1)
+    handles = []
+    order = sorted(FOCUS, key=lambda m: -float(cov[(cov["model"] == m)].sort_values("coverage")["mcc"].iloc[0]))
+    for m in order:
+        g = cov[cov["model"] == m].sort_values("coverage")
+        color, marker = STYLE[m]
+        (h,) = ax.plot(g["coverage"] * 100, g["mcc"], color=color, lw=2, marker=marker, ms=7, mec=SURFACE,
+                       mew=1.2, zorder=3, label=name(m))
+        handles.append(h)
+    rev = coverage[coverage["model"] == "reversal"]
+    if not rev.empty:
+        color, marker = STYLE["reversal"]
+        h = ax.scatter([100], [float(rev["mcc"].iloc[0])], color=color, marker=marker, s=80, zorder=4,
+                       edgecolor=SURFACE, linewidth=1, label="Reversal (acts on every day)")
+        handles.append(h)
+    ax.axhline(0, color=MUTED, lw=1, zorder=1)
+    ax.set_xscale("log")
+    ax.set_xticks([10, 25, 50, 100])
+    ax.set_xticklabels(["10%", "25%", "50%", "100%"])
+    ax.minorticks_off()
+    ax.set_xlabel("Share of stock-days acted on (most confident first)")
+    ax.set_ylabel("MCC on the stock-days acted on")
+    _clean(ax)
+    ax.legend(handles=handles, loc="upper left", bbox_to_anchor=(1.01, 1), frameon=False, fontsize=8.5)
+    fig.suptitle(title, x=0.01, ha="left", fontsize=11.5)
+    fig.text(0.01, 0.01, "Test years 2005–2022. Confidence cutoffs set on each fold's validation year and applied "
+             "unchanged to its test year. Grey: the other models.", fontsize=8, color=MUTED)
+    fig.tight_layout(rect=(0, 0.04, 1, 0.97))
+    fig.savefig(path, dpi=200, facecolor=SURFACE)
+    plt.close(fig)
+
+
+def confident_figure(vs_reversal: pd.DataFrame, path: Path, title: str, coverage: float = 0.1) -> None:
+    import matplotlib
+    matplotlib.use("Agg")
+    import matplotlib.pyplot as plt
+    _style(plt)
+    d = vs_reversal[(vs_reversal["target_coverage"] == coverage) & ~vs_reversal["model"].isin(BASELINES)]
+    d = d.sort_values("diff").reset_index(drop=True)
+    fig, ax = plt.subplots(figsize=(8.4, 0.34 * len(d) + 1.6), facecolor=SURFACE)
+    ax.set_facecolor(SURFACE)
+    for i, r in d.iterrows():
+        clears = r["diff_low"] > 0
+        ax.plot([r["diff_low"], r["diff_high"]], [i, i], color=INK if clears else "#9a9995", lw=1.6, zorder=2)
+        ax.scatter([r["diff"]], [i], s=46, zorder=3, marker="o",
+                   facecolor=INK if clears else SURFACE, edgecolor=INK if clears else "#7a7975", linewidth=1.3)
+    ax.axvline(0, color=MUTED, lw=1, zorder=1)
+    ax.set_yticks(range(len(d)))
+    ax.set_yticklabels([name(m) for m in d["model"]], fontsize=8.5)
+    ax.tick_params(axis="y", length=0)
+    ax.set_xlabel("MCC minus reversal's MCC on the same stock-days")
+    _clean(ax)
+    ax.grid(False, axis="y")
+    ax.spines["left"].set_visible(False)
+    fig.suptitle(title, x=0.01, ha="left", fontsize=11.5)
+    fig.text(0.01, 0.01, f"Each model's {coverage:.0%} most confident stock-days, 2005–2022. Lines: 95% "
+             "stationary-bootstrap intervals over dates. Filled: interval above zero.", fontsize=8, color=MUTED)
+    fig.tight_layout(rect=(0, 0.04, 1, 0.97))
+    fig.savefig(path, dpi=200, facecolor=SURFACE)
+    plt.close(fig)
+
+
+EPISODE_MODELS = ["svm_b", "lightgbm_b", "rf_b", "knn_b3", "pattern_miner", "reversal"]
+
+
+def episodes_figure(episodes: pd.DataFrame, leave_one_out: pd.DataFrame, path: Path, title: str) -> None:
+    import matplotlib
+    matplotlib.use("Agg")
+    import matplotlib.pyplot as plt
+    _style(plt)
+    fig, (left, right) = plt.subplots(1, 2, figsize=(11.6, 4.9), sharey=True, facecolor=SURFACE,
+                                      gridspec_kw={"width_ratios": [5, 5]})
+    names = list(dict.fromkeys(episodes["episode"]))
+    dropped = ["none"] + [e for e in names if e != "other" and e in set(leave_one_out["dropped"])]
+    width = 0.12
+    offsets = (np.arange(len(EPISODE_MODELS)) - (len(EPISODE_MODELS) - 1) / 2) * width
+    handles = []
+    for k, m in enumerate(EPISODE_MODELS):
+        color, marker = STYLE[m]
+        e = episodes[episodes["model"] == m].set_index("episode").reindex(names)
+        h = left.scatter(np.arange(len(names)) + offsets[k], e["mcc"], color=color, marker=marker, s=46,
+                         edgecolor=SURFACE, linewidth=0.8, zorder=3, label=name(m))
+        handles.append(h)
+        o = leave_one_out[leave_one_out["model"] == m].set_index("dropped").reindex(dropped)
+        right.scatter(np.arange(len(dropped)) + offsets[k], o["mcc"], color=color, marker=marker, s=46,
+                      edgecolor=SURFACE, linewidth=0.8, zorder=3)
+    first = episodes.drop_duplicates("episode").set_index("episode")
+    pretty = lambda e: e.replace("-", "–") if e != "other" else "Other days"
+    left.set_xticks(range(len(names)))
+    left.set_xticklabels([f"{pretty(e)}\n{int(first.loc[e, 'episode_days'])} days\n"
+                          f"({first.loc[e, 'share_of_high_days']:.0%})" for e in names], fontsize=8.5)
+    right.set_xticks(range(len(dropped)))
+    right.set_xticklabels(["All high-\nvolatility days" if d == "none" else f"Without\n{pretty(d)}"
+                           for d in dropped], fontsize=8.5)
+    left.set_title("By episode", loc="left", fontsize=10)
+    right.set_title("With one episode left out", loc="left", fontsize=10)
+    left.set_ylabel("MCC on high-volatility days")
+    for ax in (left, right):
+        ax.set_facecolor(SURFACE)
+        ax.axhline(0, color=MUTED, lw=1, zorder=1)
+        _clean(ax)
+        ax.grid(False, axis="x")
+        ax.tick_params(axis="x", length=0)
+    right.legend(handles=handles, loc="upper left", bbox_to_anchor=(1.01, 1), frameon=False, fontsize=8.5)
+    fig.suptitle(title, x=0.01, ha="left", fontsize=11.5)
+    fig.text(0.01, 0.01, "High volatility: SPY's 21-day volatility in the top third of all earlier days. "
+             "Test years 2005–2022.", fontsize=8, color=MUTED)
+    fig.tight_layout(rect=(0, 0.04, 1, 0.97))
+    fig.savefig(path, dpi=200, facecolor=SURFACE)
+    plt.close(fig)
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     parser.add_argument("version", help="results version, e.g. v4")
@@ -155,7 +308,21 @@ def main() -> int:
     headline = load_config()["backtest"]["cost_bps_per_side"]
     grid_figure(summary, folder / "figure_grid.png", "Predictive accuracy by model and encoding")
     cost_figure(backtest, folder / "figure_cost_curve.png", "Returns fall with trading costs", headline)
-    print(f"Wrote results/{args.version}/figure_grid.png and figure_cost_curve.png")
+    written = ["figure_grid.png", "figure_cost_curve.png"]
+    if (folder / "coverage.csv").exists():
+        coverage_figure(pd.read_csv(folder / "coverage.csv"), folder / "figure_coverage.png",
+                        "Accuracy rises on the days a model is most confident about")
+        written.append("figure_coverage.png")
+    if (folder / "coverage_vs_reversal.csv").exists():
+        confident_figure(pd.read_csv(folder / "coverage_vs_reversal.csv"), folder / "figure_confident.png",
+                         "Confident days: each model against reversal on the same stock-days")
+        written.append("figure_confident.png")
+    if (folder / "regime_episodes.csv").exists() and (folder / "regime_episodes_leave_one_out.csv").exists():
+        episodes_figure(pd.read_csv(folder / "regime_episodes.csv"),
+                        pd.read_csv(folder / "regime_episodes_leave_one_out.csv"), folder / "figure_episodes.png",
+                        "High-volatility predictability by episode")
+        written.append("figure_episodes.png")
+    print(f"Wrote results/{args.version}/: " + ", ".join(written))
     return 0
 
 

@@ -44,7 +44,7 @@ Transaction costs are charged in basis points per side on every unit of position
 
 For each strategy we report the compounded annual return, the annualized volatility, the Sharpe ratio (Sharpe, 1966), the maximum drawdown (the largest fall from a previous peak), and the average turnover. The Sharpe ratio is computed as the mean daily return divided by its standard deviation, scaled by √252, without subtracting a risk-free rate, which is appropriate for comparing strategies with one another. The always-long baseline under the long/flat strategy is equivalent to an equal-weighted, daily-rebalanced buy-and-hold portfolio of the 22 stocks, the natural benchmark for any trading strategy built from them.
 
-Trading at a closing price that has just been observed is an optimistic assumption, since in practice the signal would be computed after the close. Section [X] repeats the backtest with positions entered at the next day's open. Statistical tests for whether differences between models exceed what chance would produce are described in Section 8.
+Trading at a closing price that has just been observed is an optimistic assumption, since in practice the signal would be computed after the close. Section 9.7 repeats the backtest with positions entered at the next day's open. Statistical tests for whether differences between models exceed what chance would produce are described in Section 8.
 
 ### References for these sections
 
