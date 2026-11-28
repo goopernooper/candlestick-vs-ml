@@ -1,4 +1,4 @@
-## 2. Data
+## 3. Data
 
 We use daily open, high, low and close prices from Yahoo Finance, retrieved with the yfinance library (version 1.7.0) on September 28, 2026. Prices are adjusted for splits and dividends. The study period runs from January 2, 2002 to December 31, 2025, which starts after U.S. exchanges completed the move to decimal prices in 2001; fractional tick sizes would distort the small candle bodies that patterns such as the doji depend on. We also retrieve October through December 2001 so that rolling volatility measures are fully initialized on the first day of the study period.
 
