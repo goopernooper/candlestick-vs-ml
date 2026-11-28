@@ -74,3 +74,21 @@ def test_paper_has_no_placeholders():
         assert marker not in text
     for k in range(1, 6):
         assert f"**Figure {k}." in text
+
+
+def test_poster_figures_render_at_print_size(tmp_path):
+    from poster_figures import DPI, poster_confident, poster_cost, poster_grid
+    from PIL import Image
+    rng = np.random.default_rng(1)
+    names = [f"{m}_{e}" for m, _ in MODELS for e, _ in ENCODINGS] + ["reversal"]
+    poster_grid(pd.DataFrame({"mcc": rng.uniform(0, 0.035, len(names))}, index=names), tmp_path / "g.png")
+    rows = [{"model": m, "strategy": "long_short", "cost_bps": c, "ann_return": 0.2 - 0.01 * c * (i + 1)}
+            for i, m in enumerate([*COST_MODELS, "always_long"]) for c in [0, 1, 2, 5, 10, 20]]
+    poster_cost(pd.DataFrame(rows), tmp_path / "c.png", headline=5)
+    vs = pd.DataFrame([{"model": m, "target_coverage": 0.1, "diff": d, "diff_low": d - 0.02, "diff_high": d + 0.02}
+                       for m, d in zip(names, rng.uniform(-0.03, 0.06, len(names)))])
+    poster_confident(vs, tmp_path / "f.png")
+    # printed at 17.7 in and 12 in wide, at the print resolution
+    assert Image.open(tmp_path / "g.png").size[0] == round(17.7 * DPI)
+    assert Image.open(tmp_path / "c.png").size[0] == round(17.7 * DPI)
+    assert Image.open(tmp_path / "f.png").size[0] == round(12.0 * DPI)
